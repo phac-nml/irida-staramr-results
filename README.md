@@ -4,7 +4,7 @@
 ## Legal
 
 
-Copyright Government of Canada 2018
+Copyright Government of Canada 2021
 
 Written by: National Microbiology Laboratory, Public Health Agency of Canada
 
