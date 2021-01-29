@@ -1,7 +1,6 @@
 from rauth import OAuth2Service
 from requests import ConnectionError
 import json
-import logging
 
 
 def token_decoder(s):
@@ -93,29 +92,29 @@ class IridaAPI(object):
 
         self.session = session
 
-    def get_resource(self, resource_endpoint):
+    def get_resource_from_path(self, endpoint_path):
+        endpoint_url = self.base_url + self.base_endpoint + endpoint_path
+        return self.get_resource(endpoint_url)
+
+    def get_resource(self, endpoint_url, headers=None):
         """
             Grabs a resource from irida rest api with the provide resource endpoint url formatted in string
 
-            :param resource_endpoint
+            :param endpoint_url, headers:
             :return a response object
         """
 
-        endpoint = self.base_url + self.base_endpoint + resource_endpoint
-
-        # TODO: allow any Accept type
-        headers = {
-            "Accept": "text/plain"
-        }
+        if headers is None:
+            headers = {"Accept": "*/*"}
 
         try:
-            response = self.session.get(endpoint, headers=headers)
+            response = self.session.get(endpoint_url, headers=headers)
         except Exception as e:
             raise Exception(f"No session found. Error message: {e.args}")
 
         # TODO: better response handler
 
         if response.status_code not in range(200, 299):
-            raise Exception("Invalid request.")
+            raise Exception(f"Invalid request. Status code: {response.status_code}")
 
         return response

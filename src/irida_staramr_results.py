@@ -1,4 +1,5 @@
-from irida_api import IridaAPI
-from prettyprinter import pprint
+from staramr_writer import StaramrWriter
 
-irida = IridaAPI("neptune", "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR")
+amr_write = StaramrWriter()
+analysis_id = "8"
+amr_write.get_all_analysis_results(analysis_id)
