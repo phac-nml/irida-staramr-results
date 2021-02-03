@@ -26,6 +26,9 @@ class IridaAPI(object):
         self.session = None
         self._create_session()
 
+    def _token_decoder(self, s):
+        return json.loads(s.decode('utf-8'))
+
     def _get_oauth_service(self):
         """
         get oauth service to be used to get access token
@@ -67,7 +70,7 @@ class IridaAPI(object):
 
         try:
             access_token = oauth_service.get_access_token(
-                decoder=token_decoder, **params)
+                decoder=self._token_decoder, **params)
         except ConnectionError as e:
             # logging.error("Can not connect to IRIDA")
             raise Exception("Could not connect to the IRIDA server. URL may be incorrect."
@@ -98,9 +101,9 @@ class IridaAPI(object):
 
     def get_resource(self, endpoint_url, headers=None):
         """
-            Grabs a resource from irida rest api with the provide resource endpoint url formatted in string
+            Grabs a resource from irida rest api with the provide FULL resource endpoint url formatted in string
 
-            :param endpoint_url, headers:
+            :param endpoint_url: headers:
             :return a response object
         """
 
