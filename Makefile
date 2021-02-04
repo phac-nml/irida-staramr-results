@@ -6,5 +6,5 @@ help:
 	@echo "------------------------------------"
 
 run:
-	${PYTHON} src/irida_staramr_results.py
+	${PYTHON} irida_staramr_results/irida_staramr_results.py
 
