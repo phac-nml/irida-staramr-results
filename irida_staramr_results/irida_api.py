@@ -4,17 +4,18 @@ import json
 from io import StringIO
 import pandas as pd
 
+
 class IridaAPI(object):
 
     def __init__(self):
+        """
+        Creates a session by connecting to IRIDA REST API via OAuth2Service with password grant type.
+        """
         self.client_id = "neptune"
         self.client_secret = "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR"
         self.base_url = 'http://10.10.50.155:8080'
         self.username = 'admin'
         self.password = 'Test123!'
-
-        # self.max_wait_time = max_wait_time
-        # self.http_max_retries = http_max_retries
 
         self.base_endpoint = '/api'
         self.access_token_url = '/oauth/token'
@@ -28,7 +29,7 @@ class IridaAPI(object):
 
     def _get_oauth_service(self):
         """
-        get oauth service to be used to get access token
+        Get oauth service to be used to get access token
 
         :return OAuthService
         """
@@ -69,11 +70,9 @@ class IridaAPI(object):
             access_token = oauth_service.get_access_token(
                 decoder=self._token_decoder, **params)
         except ConnectionError as e:
-            # logging.error("Can not connect to IRIDA")
             raise Exception("Could not connect to the IRIDA server. URL may be incorrect."
                             f"IRIDA returned with error message: {e.args}")
         except KeyError as e:
-            # logging.error("Can not get access token from IRIDA")
             raise Exception("Could not get access token from IRIDA. Credentials may be incorrect."
                             f"IRIDA returned with error message: {e.args}")
 
@@ -149,10 +148,10 @@ class IridaAPI(object):
 
         project_analyses_url = self._get_href_from_links("project/analyses", project["resource"]["links"])
 
-        if  project_analyses_url is None:
+        if project_analyses_url is None:
             print("No 'project/analyses' link relation in project object.")
         else:
-            project_analysis = {} # analysis object
+            project_analysis = {}  # analysis object
 
             project_analyses_response = self._get_resource(project_analyses_url).json()
 
@@ -184,7 +183,7 @@ class IridaAPI(object):
                       "staramr-detailed-summary",
                       "staramr-summary"]
 
-        analysis = self._get_resource_from_path(f"/analysisSubmissions/{analysis_id}/analysis").json()
+        analysis = self._get_analysis(analysis_id).json()
 
         # grabs file link from analysisSubmission endpoint and uses that file link to grab file data.
         for fn in file_names:
@@ -200,4 +199,5 @@ class IridaAPI(object):
                 df = pd.read_csv(data, delimiter="\t")
                 df.to_csv(f"out/{fn}.csv")
 
-
+    def _get_analysis(self, analysis_id):
+        return self._get_resource_from_path(f"/analysisSubmissions/{analysis_id}/analysis")
