@@ -15,10 +15,11 @@ setuptools.setup(
     name='irida-staramr-results',
     version=__version__,
     description='Exports StarAMR results available through IRIDA into a single report.',
-    long_description=long_description,
     author='Marielle Manlulu',
     author_email='marielle.manlulu@canada.ca',
     url='https://github.com/phac-nml/irida-staramr-results',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     license = 'Apache-2.0',
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

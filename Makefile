@@ -8,3 +8,5 @@ help:
 run:
 	${PYTHON} irida_staramr_results/irida_staramr_results.py
 
+wheel:
+	${PYTHON} setup.py sdist bdist_wheel
