@@ -1,5 +1,6 @@
 import sys
 import argparse
+import logging
 from version import __version__
 from irida_api import IridaAPI
 
@@ -43,9 +44,9 @@ def main():
     args_dict = vars(args)
 
     if args_dict["project"] is None:
-        print("Please specify project(s) to scan for results.")
+        logging.warning("Please specify project(s) to scan for results.")
     else:
-        irida = IridaAPI()
+        irida = IridaAPI("neptune", "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR", "http://10.10.50.155:8080", "admin", "Test123!")
         analyses = irida.get_analyses_from_projects(args_dict["project"])
         print(analyses)
 
