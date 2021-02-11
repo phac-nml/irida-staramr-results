@@ -1,12 +1,14 @@
 import json
 import logging
 
+from urllib.error import HTTPError
 from urllib.parse import urljoin
 from rauth import OAuth2Service
 from requests import ConnectionError
 from io import StringIO
 
 import pandas as pd
+
 
 class IridaAPI(object):
 
@@ -82,12 +84,14 @@ class IridaAPI(object):
         }
 
         try:
+            # TODO: Add a max retry everytime it attempts to connect. At the moment, program keep running.
+            #  (Cannot detect failed connection?)
             access_token = oauth_service.get_access_token(
                 decoder=token_decoder, **params)
         except ConnectionError as e:
             logging.error("Can not connect to IRIDA.")
-            raise Exception("Could not connect to the IRIDA server. URL may be incorrect."
-                            f"IRIDA returned with error message: {e.args}")
+            raise ConnectionError("Could not connect to the IRIDA server. URL may be incorrect."
+                                  f"IRIDA returned with error message: {e.args}")
         except KeyError as e:
             logging.error("Can not get access token from IRIDA.")
             raise Exception("Could not get access token from IRIDA. Credentials may be incorrect."
@@ -131,7 +135,7 @@ class IridaAPI(object):
         # TODO: better response handler
 
         if response.status_code not in range(200, 299):
-            raise Exception(f"Invalid request. Status code: {response.status_code}")
+            raise HTTPError(endpoint_url, response.status_code, "HTTPError occurred.", response.headers, None)
 
         return response
 
@@ -177,7 +181,6 @@ class IridaAPI(object):
                 print("No analysis in this project")
             else:
                 for analysis in project_analyses_response["resource"]["resources"]:
-
                     # create the analysis object, overrides existing information if it exists.
                     project_analysis["name"] = analysis["name"]
                     project_analysis["identifier"] = analysis["identifier"]
