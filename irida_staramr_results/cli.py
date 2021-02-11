@@ -19,17 +19,10 @@ def init_argparser():
                                  help="The name of the output excel file.")
 
     # Arguments that will override fields in the config file.
-    argument_parser.add_argument("-bs", "--base-url", action="store",
-                                 help="Override 'base_url' in config file. The URL to the IRIDA server.")
     argument_parser.add_argument("-u", "--username", action="store",
                                  help="Override the 'username' in config file. This is your IRIDA account username.")
     argument_parser.add_argument("-pw", "--password", action="store",
                                  help="Override the 'password' in config file. This is your IRIDA account password.")
-    argument_parser.add_argument("-ci", "--client-id", action="store",
-                                 help="Override the 'client_id' field in config file. This is created and provided by IRIDA used to handle by the server.")
-    argument_parser.add_argument("-cs", "--client-secret", action="store",
-                                 help="Override the 'client_secret' field in config file. This is created and provided by IRIDA used to handle by the server.")
-
 
     return argument_parser
 
