@@ -17,8 +17,6 @@ def init_argparser():
                                  help="Project(s) to scan for StarAMR results.")
     argument_parser.add_argument("-o", "--output", action="store",
                                  help="The name of the output excel file.")
-
-    # Arguments that will override fields in the config file.
     argument_parser.add_argument("-u", "--username", action="store",
                                  help="This is your IRIDA account username.")
     argument_parser.add_argument("-pw", "--password", action="store",
