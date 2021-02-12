@@ -11,7 +11,7 @@ from requests.adapters import HTTPAdapter
 from . import exceptions
 
 # For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
-# can subscribe to. That way, the api module is seperate, and other applications could use the emits/messages in their
+# can subscribe to. That way, the api module is separate, and other applications could use the emits/messages in their
 # own setups.
 
 
@@ -251,7 +251,6 @@ class IridaAPI(object):
             except KeyError:
                 raise exceptions.IridaKeyError(
                     target_dict["key"] + " not found. Available keys: " ", ".join(resources_list[0].keys()))
-
             except StopIteration:
                 raise exceptions.IridaKeyError(target_dict["value"] + " not found.")
 
@@ -260,13 +259,11 @@ class IridaAPI(object):
         try:
             ret_val = next(link["href"] for link in links_list
                            if link["rel"] == target_key)
-
         except StopIteration:
             logging.debug(target_key + " not found in links. Available links: "
                                        ", ".join([str(link["rel"]) for link in links_list]))
             raise exceptions.IridaKeyError(target_key + " not found in links. Available links: "
                                                         ", ".join([str(link["rel"]) for link in links_list]))
-
         return ret_val
 
     def get_amr_analysis_results(self, project_id):
