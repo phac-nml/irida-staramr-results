@@ -227,7 +227,6 @@ class IridaAPI(object):
         response = self._session.get(target_url)
 
         if target_dict:  # we are targeting specific resources in the response
-
             # TODO: This try except block has been added to log a crash that has occurred, to find the source.
             try:
                 resources_list = response.json()["resource"]["resources"]
