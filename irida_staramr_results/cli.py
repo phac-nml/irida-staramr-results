@@ -20,9 +20,9 @@ def init_argparser():
 
     # Arguments that will override fields in the config file.
     argument_parser.add_argument("-u", "--username", action="store",
-                                 help="Override the 'username' in config file. This is your IRIDA account username.")
+                                 help="This is your IRIDA account username.")
     argument_parser.add_argument("-pw", "--password", action="store",
-                                 help="Override the 'password' in config file. This is your IRIDA account password.")
+                                 help="This is your IRIDA account password.")
 
     return argument_parser
 
@@ -42,26 +42,28 @@ def main():
     args_dict = vars(args)
 
     if args_dict["project"] is None:
-        logging.warning("Please specify project(s) to scan for results.")
-    else:
-        irida = IridaAPI("neptune", "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR", "http://10.10.50.155:8080", "admin", "Test123!")
+        logging.error("Please specify project(s) to scan for results.")
+        sys.exit(1)
 
-        try:
-            analyses = irida.get_analyses_from_projects(args_dict["project"])
+    irida = IridaAPI("neptune", "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR", "http://10.10.50.155:8080", "admin",
+                     "Test123!")
 
-        # TODO: better exception handler
-        except ConnectionError as e:
-            error_txt = f"Could not connect to IRIDA. Error: {e}"
-            raise Exception(error_txt)
-        except HTTPError as e:
-            project_id = args_dict["project"]
-            error_txt = f"The given project ID doesn't exist: {project_id}. "
-            logging.error(error_txt)
-            raise Exception(error_txt + f"Error: {e}")
-        except Exception as e:
-            error_txt = f"An Error has occurred. Error: {e}"
-            logging.error(error_txt)
-            raise Exception(error_txt)
+    try:
+        analyses = irida.get_analyses_from_projects(args_dict["project"])
+
+    # TODO: better exception handler
+    except ConnectionError as e:
+        error_txt = f"Could not connect to IRIDA. Error: {e}"
+        raise Exception(error_txt)
+    except HTTPError as e:
+        project_id = args_dict["project"]
+        error_txt = f"The given project ID doesn't exist: {project_id}. "
+        logging.error(error_txt)
+        raise Exception(error_txt + f"Error: {e}")
+    except Exception as e:
+        error_txt = f"An Error has occurred. Error: {e}"
+        logging.error(error_txt)
+        raise Exception(error_txt)
 
 
 # This is called when the program is run for the first time

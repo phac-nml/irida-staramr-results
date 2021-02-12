@@ -34,5 +34,9 @@ setuptools.setup(
     install_requires=install_requires,
     packages=setuptools.find_packages(),
     include_package_data=True,
-    entry_points = { 'console_scripts': ['irida_staramr_results=irida_staramr_results.cli:main']}
+    entry_points = {
+        'console_scripts': [
+            'irida-staramr-results = irida_staramr_results.cli:main'
+        ]
+    }
 )
