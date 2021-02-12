@@ -1,41 +1,42 @@
+import json
+import logging
+
+from urllib.error import HTTPError
+from urllib.parse import urljoin
 from rauth import OAuth2Service
 from requests import ConnectionError
-import json
 from io import StringIO
+
 import pandas as pd
 
 
 class IridaAPI(object):
 
-    def __init__(self):
+    def __init__(self, client_id, client_secret, base_url, username, password, max_wait_time=20, http_max_retries=5):
         """
         Creates a session by connecting to IRIDA REST API via OAuth2Service with password grant type.
         """
-        self.client_id = "neptune"
-        self.client_secret = "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR"
-        self.base_url = 'http://10.10.50.155:8080'
-        self.username = 'admin'
-        self.password = 'Test123!'
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.base_url = base_url
+        self.username = username
+        self.password = password
+        self.max_wait_time = max_wait_time
+        self.http_max_retries = http_max_retries
 
         self.base_endpoint = '/api'
         self.access_token_url = '/oauth/token'
 
-
         self.session = None
         self._create_session()
-
-    def _token_decoder(self, s):
-        return json.loads(s.decode('utf-8'))
 
     def _get_oauth_service(self):
         """
         Get oauth service to be used to get access token
-
         :return OAuthService
         """
 
-        access_token_url = self.base_url + self.base_endpoint + self.access_token_url
-
+        access_token_url = urljoin(self.base_url, "api/oauth/token")
         oauth_service = OAuth2Service(
             client_id=self.client_id,
             client_secret=self.client_secret,
@@ -56,6 +57,22 @@ class IridaAPI(object):
         :return access token
         """
 
+        def token_decoder(d):
+            """
+            Safely parse given dictionary
+            :param d: returned dictionary (access token)
+            :return: evaluated dictionary
+            """
+            try:
+                irida_dict = json.loads(d.decode('utf-8'))
+            except (SyntaxError, ValueError):
+                # SyntaxError happens when something that looks nothing like a token is returned (ex: 404 page)
+                # ValueError happens with the path returns something that looks like a token, but is invalid
+                #   (ex: forgetting the /api/ part of the url)
+                raise ConnectionError("Unexpected response from server, URL may be incorrect.")
+
+            return irida_dict
+
         params = {
             "data": {
                 "grant_type": "password",
@@ -67,12 +84,16 @@ class IridaAPI(object):
         }
 
         try:
+            # TODO: Add a max retry everytime it attempts to connect. At the moment, program keep running.
+            #  (Cannot detect failed connection?)
             access_token = oauth_service.get_access_token(
-                decoder=self._token_decoder, **params)
+                decoder=token_decoder, **params)
         except ConnectionError as e:
-            raise Exception("Could not connect to the IRIDA server. URL may be incorrect."
-                            f"IRIDA returned with error message: {e.args}")
+            logging.error("Can not connect to IRIDA.")
+            raise ConnectionError("Could not connect to the IRIDA server. URL may be incorrect."
+                                  f"IRIDA returned with error message: {e.args}")
         except KeyError as e:
+            logging.error("Can not get access token from IRIDA.")
             raise Exception("Could not get access token from IRIDA. Credentials may be incorrect."
                             f"IRIDA returned with error message: {e.args}")
 
@@ -114,7 +135,7 @@ class IridaAPI(object):
         # TODO: better response handler
 
         if response.status_code not in range(200, 299):
-            raise Exception(f"Invalid request. Status code: {response.status_code}")
+            raise HTTPError(endpoint_url, response.status_code, "HTTPError occurred.", response.headers, None)
 
         return response
 
@@ -160,7 +181,6 @@ class IridaAPI(object):
                 print("No analysis in this project")
             else:
                 for analysis in project_analyses_response["resource"]["resources"]:
-
                     # create the analysis object, overrides existing information if it exists.
                     project_analysis["name"] = analysis["name"]
                     project_analysis["identifier"] = analysis["identifier"]
