@@ -47,7 +47,8 @@ def main():
                      "Test123!")
 
     try:
-        amr_analyses = irida.get_amr_analyses(args_dict["project"])
+        amr_analyses = irida.get_amr_analysis_results(args_dict["project"])
+        print(len(amr_analyses))
 
     # TODO: better exception handler
     except ConnectionError as e:

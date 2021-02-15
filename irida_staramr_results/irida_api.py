@@ -1,5 +1,7 @@
 import json
 import logging
+from pprint import pprint
+
 import exceptions
 
 from urllib.error import HTTPError
@@ -203,7 +205,7 @@ class IridaAPI(object):
     def get_project_url(self, project_id):
         return self._get_link(self.base_url + f"/api/projects/{project_id}", "self")
 
-    def get_analyses_url(self, project_url):
+    def get_analysis_submission_url(self, project_url):
         """
         Gets endpoint for all analyses in a project using _get_link() function
         :param project_url:
@@ -211,7 +213,30 @@ class IridaAPI(object):
         """
         return self._get_link(project_url, "project/analyses")
 
-    def get_analyses_from_projects(self, project_id):
+    def get_amr_analysis_results(self, project_id):
+        """
+        Get all AMR detection analysis results from a project id.
+        If nothing is found, it returns an empty array.
+        :param project_id:
+        :return analysis_result_list:
+        """
+
+        try:
+            project_analysis_submissions = self.get_analysis_submissions_from_projects(project_id)
+        except KeyError:
+            error_txt = "No analysis found in project."
+            logging.error(error_txt)
+            raise exceptions.IridaKeyError(error_txt)
+
+        all_analysis_results = self._get_all_analysis_results(project_analysis_submissions)
+
+        # Filter AMR Detection results
+        amr_analysis_results = [analysis_result for analysis_result in all_analysis_results if
+                                self.is_type_amr(analysis_result)]
+
+        return amr_analysis_results
+
+    def get_analysis_submissions_from_projects(self, project_id):
         """
         Returns an array of all analyses for a given project
         :param project_id:
@@ -219,15 +244,39 @@ class IridaAPI(object):
         """
         try:
             project_url = self.get_project_url(project_id)
-            analyses_url = self.get_analyses_url(project_url)
+            analysis_submissions_url = self.get_analysis_submission_url(project_url)
         except StopIteration:
             logging.error(f"The given project ID doesn't exist: {project_id}")
             raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
 
-        response = self._get_resource(analyses_url)
-        result = response.json()["resource"]["resources"]
+        response = self._get_resource(analysis_submissions_url)
+        analysis_submissions = response.json()["resource"]["resources"]
 
-        return result
+        return analysis_submissions
+
+    def _get_all_analysis_results(self, project_analysis_submissions):
+
+        analysis_result_list = []
+
+        for analysis_submission in project_analysis_submissions:
+
+            analysis_submission_id = analysis_submission["identifier"]
+
+            try:
+                analysis_results_url = self._get_link(self.base_url + f"/api/analysisSubmissions/{analysis_submission_id}",
+                                                      "analysis")
+            except KeyError:
+                """
+                Catches an exception if an analysis submission does not contain an analysis result.
+                Ignores the exception and continue with searching the rest of analysis submissions
+                """
+                logging.info(f"No analysis result exists for analysis submission id [{analysis_submission_id}]. Moving on...")
+                continue
+            else:
+                analysis_result = self._get_resource(analysis_results_url).json()["resource"]
+                analysis_result_list.append(analysis_result)
+
+        return analysis_result_list
 
     def is_type_amr(self, analysis_result):
         """
@@ -237,40 +286,7 @@ class IridaAPI(object):
         """
         return analysis_result["analysisType"]["type"] == "AMR_DETECTION"
 
-    def get_amr_analyses(self, project_id):
-        """
-        Get all AMR detection analysis results, in a form of dictionary from a project id.
-        If nothing is found, it returns an empty array.
-        :param project_id:
-        :return analysis_result_list:
-        """
 
-        try:
-            project_analyses = self.get_analyses_from_projects(project_id)
-        except KeyError:
-            error_txt = "No analysis found in project."
-            logging.error(error_txt)
-            raise exceptions.IridaKeyError(error_txt)
 
-        analysis_result_list = []
 
-        for analysis in project_analyses:
 
-            analysis_id = analysis["identifier"]
-
-            try:
-                analysis_results_url = self._get_link(self.base_url + f"/api/analysisSubmissions/{analysis_id}",
-                                                      "analysis")
-            except KeyError:
-                """
-                Catches an exception if an analysis does not contain analysis results.
-                Ignores the exception and continue with searching the rest of analysis
-                """
-                logging.info("No analysis result exists for this analysis. Moving on...")
-                continue
-            else:
-                analysis_result = self._get_resource(analysis_results_url).json()["resource"]
-                if self.is_type_amr(analysis_result):
-                    analysis_result_list.append(analysis_result)
-
-        return analysis_result_list
