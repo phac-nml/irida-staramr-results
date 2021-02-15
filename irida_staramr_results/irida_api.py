@@ -1,7 +1,5 @@
 import json
 import logging
-from pprint import pprint
-
 import exceptions
 
 from urllib.error import HTTPError
@@ -25,7 +23,6 @@ class IridaAPI(object):
         self.max_wait_time = max_wait_time
         self.http_max_retries = http_max_retries
 
-        self.base_endpoint = '/api'
         self.access_token_url = '/oauth/token'
 
         self.session = None
@@ -190,7 +187,7 @@ class IridaAPI(object):
         else:
             links_list = response.json()["resource"]["links"]
 
-        # find the right href based on rel (target_key)
+        # find the right "href" based on "rel"/target_key
         try:
             ret_val = next(link["href"] for link in links_list
                            if link["rel"] == target_key)
@@ -202,17 +199,6 @@ class IridaAPI(object):
 
         return ret_val
 
-    def get_project_url(self, project_id):
-        return self._get_link(self.base_url + f"/api/projects/{project_id}", "self")
-
-    def get_analysis_submission_url(self, project_url):
-        """
-        Gets endpoint for all analyses in a project using _get_link() function
-        :param project_url:
-        :return:
-        """
-        return self._get_link(project_url, "project/analyses")
-
     def get_amr_analysis_results(self, project_id):
         """
         Get all AMR detection analysis results from a project id.
@@ -222,7 +208,7 @@ class IridaAPI(object):
         """
 
         try:
-            project_analysis_submissions = self.get_analysis_submissions_from_projects(project_id)
+            project_analysis_submissions = self._get_analysis_submissions_from_projects(project_id)
         except KeyError:
             error_txt = "No analysis found in project."
             logging.error(error_txt)
@@ -232,19 +218,19 @@ class IridaAPI(object):
 
         # Filter AMR Detection results
         amr_analysis_results = [analysis_result for analysis_result in all_analysis_results if
-                                self.is_type_amr(analysis_result)]
+                                self._is_type_amr(analysis_result)]
 
         return amr_analysis_results
 
-    def get_analysis_submissions_from_projects(self, project_id):
+    def _get_analysis_submissions_from_projects(self, project_id):
         """
         Returns an array of all analyses for a given project
         :param project_id:
         :return project_analysis_list:
         """
         try:
-            project_url = self.get_project_url(project_id)
-            analysis_submissions_url = self.get_analysis_submission_url(project_url)
+            project_url = self._get_link(self.base_url + f"/api/projects/{project_id}", "self")
+            analysis_submissions_url = self._get_link(project_url, "project/analyses")
         except StopIteration:
             logging.error(f"The given project ID doesn't exist: {project_id}")
             raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
@@ -278,7 +264,7 @@ class IridaAPI(object):
 
         return analysis_result_list
 
-    def is_type_amr(self, analysis_result):
+    def _is_type_amr(self, analysis_result):
         """
         Checks if the analysis result is an amr detection type.
         :param analysis_result:

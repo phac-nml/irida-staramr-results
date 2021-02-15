@@ -48,7 +48,6 @@ def main():
 
     try:
         amr_analyses = irida.get_amr_analysis_results(args_dict["project"])
-        print(len(amr_analyses))
 
     # TODO: better exception handler
     except ConnectionError as e:
