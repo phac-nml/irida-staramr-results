@@ -1,13 +1,12 @@
 import json
 import logging
+import exceptions
 
 from urllib.error import HTTPError
 from urllib.parse import urljoin
 from rauth import OAuth2Service
 from requests import ConnectionError
-from io import StringIO
 
-import pandas as pd
 
 
 class IridaAPI(object):
@@ -94,7 +93,7 @@ class IridaAPI(object):
                                   f"IRIDA returned with error message: {e.args}")
         except KeyError as e:
             logging.error("Can not get access token from IRIDA.")
-            raise Exception("Could not get access token from IRIDA. Credentials may be incorrect."
+            raise Exception("Could not get access token from IRIDA. Credentials may be incorrect. "
                             f"IRIDA returned with error message: {e.args}")
 
         return access_token
@@ -112,15 +111,11 @@ class IridaAPI(object):
 
         self.session = session
 
-    def _get_resource_from_path(self, endpoint_path):
-        endpoint_url = self.base_url + self.base_endpoint + endpoint_path
-        return self._get_resource(endpoint_url)
-
-    def _get_resource(self, endpoint_url, headers=None):
+    def _get_resource(self, url, headers=None):
         """
             Grabs a resource from irida rest api with the provide FULL resource endpoint url formatted in string
 
-            :param endpoint_url: headers:
+            :param url: headers:
             :return a response object
         """
 
@@ -128,96 +123,154 @@ class IridaAPI(object):
             headers = {"Accept": "*/*"}
 
         try:
-            response = self.session.get(endpoint_url, headers=headers)
-        except Exception as e:
-            raise Exception(f"No session found. Error message: {e.args}")
+            # TODO: re-validate session, in case it already expires.
+            response = self.session.get(url, headers=headers)
+        except Exception as e:  # should this be a connection error?
+            logging.error("Failed to create a session with the IRIDA API. "
+                          "Session may have been expired or connection may have failed.")
+            raise exceptions.IridaConnectionError(f"No session found. Error message: {e.args}")
 
         # TODO: better response handler
 
         if response.status_code not in range(200, 299):
-            raise HTTPError(endpoint_url, response.status_code, "HTTPError occurred.", response.headers, None)
+            raise HTTPError(url, response.status_code, "HTTPError occurred.", response.headers, None)
 
         return response
 
-    def _get_href_from_links(self, rel, links):
+    def _get_link(self, target_url, target_key, target_dict=None):
         """
-        Returns a link based on the link relation (rel) from a list of links.
+        Makes a call to target_url(api) expecting a json response
+        Tries to retrieve target_key from response to find link to resource
+        Raises exceptions if target_key not found or target_url is invalid
 
-        :param rel: link relation
-        :param links:
-        :return: href:
+        :param target_url: URL to retrieve link from
+        :param target_key: name of link (e.g projects or project/samples)
+        :param target_dict: optional dict containing key and value to search in targets.
+                            (e.g {key="identifier",value="100"} to retrieve where identifier=100)
+
+        :return: link if it exists
         """
-        for l in links:
-            if l["rel"] == rel:
-                return l["href"]
-        return None
+        logging.debug(f"irida_api._get_link: target_url: {target_url}, target_key: {target_key}.")
 
-    def get_project_from_id(self, _id):
-        """ Returns a project resource object from an id of a project """
-        return self._get_resource_from_path(f"/projects/{_id}")
+        response = self._get_resource(target_url)
 
-    def get_analyses_from_projects(self, _id):
+        if target_dict:  # we are targeting specific resources in the response
+
+            try:
+                resources_list = response.json()["resource"]["resources"]
+            except KeyError as e:
+                # TODO: This try except block has been added to log a crash that has occurred, to find the source.
+                #   This is occurring for an unknown reason.
+                #   Once docs can be gathered displaying information, we can determine the source of the bug and fix it.
+                logging.error("Dumping json response from IRIDA:")
+                logging.error(str(response.json()))
+                logging.error("Dumping python KeyError:")
+                logging.error(e)
+                error_txt = "Response from IRIDA Could not be parsed. Please show the log to your IRIDA Administrator."
+                logging.error(error_txt)
+                raise exceptions.IridaKeyError(error_txt)
+
+            # try to get all keys from target_dict to our list or links
+            try:
+                links_list = next(
+                    r["links"] for r in resources_list
+                    if r[target_dict["key"]].lower() == str(target_dict["value"]).lower()
+                )
+
+            except KeyError:
+                raise exceptions.IridaKeyError(target_dict["key"] + " not found. Available keys: "
+                                                                    ", ".join(resources_list[0].keys()))
+
+            except StopIteration:
+                raise exceptions.IridaKeyError(target_dict["value"] + " not found.")
+
+
+        else:
+            links_list = response.json()["resource"]["links"]
+
+        # find the right href based on rel (target_key)
+        try:
+            ret_val = next(link["href"] for link in links_list
+                           if link["rel"] == target_key)
+        except StopIteration:
+            error_txt = target_key + " not found in links. Available links: " +\
+                        ", ".join([str(link["rel"]) for link in links_list])
+            logging.debug(error_txt)
+            raise exceptions.IridaKeyError(error_txt)
+
+        return ret_val
+
+    def get_project_url(self, project_id):
+        return self._get_link(self.base_url + f"/api/projects/{project_id}", "self")
+
+    def get_analyses_url(self, project_url):
         """
-        Returns an array containing analysis objects for a given project
+        Gets endpoint for all analyses in a project using _get_link() function
+        :param project_url:
+        :return:
+        """
+        return self._get_link(project_url, "project/analyses")
 
-        :param _id:
+    def get_analyses_from_projects(self, project_id):
+        """
+        Returns an array of all analyses for a given project
+        :param project_id:
         :return project_analysis_list:
         """
-        project_analysis_list = []
+        try:
+            project_url = self.get_project_url(project_id)
+            analyses_url = self.get_analyses_url(project_url)
+        except StopIteration:
+            logging.error(f"The given project ID doesn't exist: {project_id}")
+            raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
 
-        project = self.get_project_from_id(_id).json()
+        response = self._get_resource(analyses_url)
+        result = response.json()["resource"]["resources"]
 
-        project_analyses_url = self._get_href_from_links("project/analyses", project["resource"]["links"])
+        return result
 
-        if project_analyses_url is None:
-            print("No 'project/analyses' link relation in project object.")
-        else:
-            project_analysis = {}  # analysis object
-
-            project_analyses_response = self._get_resource(project_analyses_url).json()
-
-            # check if resources array is not empty
-            if len(project_analyses_response["resource"]["resources"]) <= 0:
-                print("No analysis in this project")
-            else:
-                for analysis in project_analyses_response["resource"]["resources"]:
-                    # create the analysis object, overrides existing information if it exists.
-                    project_analysis["name"] = analysis["name"]
-                    project_analysis["identifier"] = analysis["identifier"]
-                    project_analysis["workflow_id"] = analysis["workflowId"]
-                    project_analysis["links"] = analysis["links"]
-
-                    # add to the list of analysis, by deep copy
-                    project_analysis_list.append(project_analysis.copy())
-
-        return project_analysis_list
-
-    def analysis_to_csv(self, analysis_id):
+    def is_type_amr(self, analysis_result):
         """
-        Grabs all analysis results from irida and outputs all of it into one csv file.
-        :param analysis_id:
+        Checks if the analysis result is an amr detection type.
+        :param analysis_result:
+        :return boolean:
         """
-        file_names = ["staramr-mlst",
-                      "staramr-resfinder",
-                      "staramr-plasmidfinder",
-                      "staramr-detailed-summary",
-                      "staramr-summary"]
+        return analysis_result["analysisType"]["type"] == "AMR_DETECTION"
 
-        analysis = self._get_analysis(analysis_id).json()
+    def get_amr_analyses(self, project_id):
+        """
+        Get all AMR detection analysis results, in a form of dictionary from a project id.
+        If nothing is found, it returns an empty array.
+        :param project_id:
+        :return analysis_result_list:
+        """
 
-        # grabs file link from analysisSubmission endpoint and uses that file link to grab file data.
-        for fn in file_names:
-            file_resource_link = self._get_href_from_links(f"outputFile/{fn}.tsv", analysis["resource"]["links"])
+        try:
+            project_analyses = self.get_analyses_from_projects(project_id)
+        except KeyError:
+            error_txt = "No analysis found in project."
+            logging.error(error_txt)
+            raise exceptions.IridaKeyError(error_txt)
 
-            # TODO: include settings.txt
-            if file_resource_link is None:
-                print(f"No file name {fn}.tsv exist.")
+        analysis_result_list = []
+
+        for analysis in project_analyses:
+
+            analysis_id = analysis["identifier"]
+
+            try:
+                analysis_results_url = self._get_link(self.base_url + f"/api/analysisSubmissions/{analysis_id}",
+                                                      "analysis")
+            except KeyError:
+                """
+                Catches an exception if an analysis does not contain analysis results.
+                Ignores the exception and continue with searching the rest of analysis
+                """
+                logging.info("No analysis result exists for this analysis. Moving on...")
+                continue
             else:
-                file = self._get_resource(file_resource_link, headers={"Accept": "text/plain"})
-                s = str(file.content, 'utf-8')
-                data = StringIO(s)
-                df = pd.read_csv(data, delimiter="\t")
-                df.to_csv(f"out/{fn}.csv")
+                analysis_result = self._get_resource(analysis_results_url).json()["resource"]
+                if self.is_type_amr(analysis_result):
+                    analysis_result_list.append(analysis_result)
 
-    def _get_analysis(self, analysis_id):
-        return self._get_resource_from_path(f"/analysisSubmissions/{analysis_id}/analysis")
+        return analysis_result_list

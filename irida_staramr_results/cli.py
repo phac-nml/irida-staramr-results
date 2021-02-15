@@ -47,7 +47,7 @@ def main():
                      "Test123!")
 
     try:
-        analyses = irida.get_analyses_from_projects(args_dict["project"])
+        amr_analyses = irida.get_amr_analyses(args_dict["project"])
 
     # TODO: better exception handler
     except ConnectionError as e:
@@ -62,7 +62,6 @@ def main():
         error_txt = f"An Error has occurred. Error: {e}"
         logging.error(error_txt)
         raise Exception(error_txt)
-
 
 # This is called when the program is run for the first time
 if __name__ == "__main__":
