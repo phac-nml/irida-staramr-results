@@ -1,8 +1,8 @@
 import sys
 import argparse
 import logging
-from version import __version__
-from irida_api import IridaAPI
+from irida_staramr_results.version import __version__
+from irida_staramr_results.irida_api import IridaAPI
 from urllib.error import HTTPError
 
 
