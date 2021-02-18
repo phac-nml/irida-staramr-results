@@ -1,9 +1,10 @@
 import sys
 import argparse
 import logging
+import exceptions
+
 from version import __version__
 from irida_api import IridaAPI
-from urllib.error import HTTPError
 
 
 def init_argparser():
@@ -43,7 +44,7 @@ def main():
         logging.error("Please specify project(s) to scan for results.")
         sys.exit(1)
 
-    irida = IridaAPI("neptune", "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR", "http://10.10.50.155:8080", "admin",
+    irida = IridaAPI("neptune", "6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR", "http://10.10.50.155:8080/api", "admin",
                      "Test123!")
 
     try:
@@ -53,15 +54,16 @@ def main():
     except ConnectionError as e:
         error_txt = f"Could not connect to IRIDA. Error: {e}"
         raise Exception(error_txt)
-    except HTTPError as e:
+    except exceptions.IridaKeyError as e:
         project_id = args_dict["project"]
         error_txt = f"The given project ID doesn't exist: {project_id}. "
         logging.error(error_txt)
-        raise Exception(error_txt + f"Error: {e}")
+        raise exceptions.IridaKeyError(error_txt + f"Error: {e}")
     except Exception as e:
         error_txt = f"An Error has occurred. Error: {e}"
         logging.error(error_txt)
         raise Exception(error_txt)
+
 
 # This is called when the program is run for the first time
 if __name__ == "__main__":

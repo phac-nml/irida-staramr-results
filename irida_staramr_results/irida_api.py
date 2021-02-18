@@ -3,10 +3,9 @@ import logging
 import exceptions
 
 from urllib.error import HTTPError
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from rauth import OAuth2Service
 from requests import ConnectionError
-
 
 
 class IridaAPI(object):
@@ -34,13 +33,15 @@ class IridaAPI(object):
         :return OAuthService
         """
 
+        url = urlparse(self.base_url)
+
         access_token_url = urljoin(self.base_url, "api/oauth/token")
         oauth_service = OAuth2Service(
             client_id=self.client_id,
             client_secret=self.client_secret,
             name="irida",
             access_token_url=access_token_url,
-            base_url=self.base_url
+            base_url= url.scheme + "://" + url.netloc
         )
 
         return oauth_service
@@ -149,6 +150,7 @@ class IridaAPI(object):
 
         :return: link if it exists
         """
+
         logging.debug(f"irida_api._get_link: target_url: {target_url}, target_key: {target_key}.")
 
         response = self._get_resource(target_url)
@@ -183,16 +185,14 @@ class IridaAPI(object):
             except StopIteration:
                 raise exceptions.IridaKeyError(target_dict["value"] + " not found.")
 
-
         else:
             links_list = response.json()["resource"]["links"]
 
-        # find the right "href" based on "rel"/target_key
         try:
             ret_val = next(link["href"] for link in links_list
                            if link["rel"] == target_key)
         except StopIteration:
-            error_txt = target_key + " not found in links. Available links: " +\
+            error_txt = target_key + " not found in links. Available links: " + \
                         ", ".join([str(link["rel"]) for link in links_list])
             logging.debug(error_txt)
             raise exceptions.IridaKeyError(error_txt)
@@ -210,8 +210,7 @@ class IridaAPI(object):
         try:
             project_analysis_submissions = self._get_analysis_submissions_from_projects(project_id)
         except KeyError:
-            error_txt = "No analysis found in project."
-            logging.error(error_txt)
+            error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaKeyError(error_txt)
 
         all_analysis_results = self._get_all_analysis_results(project_analysis_submissions)
@@ -229,8 +228,12 @@ class IridaAPI(object):
         :return project_analysis_list:
         """
         try:
-            project_url = self._get_link(self.base_url + f"/api/projects/{project_id}", "self")
-            analysis_submissions_url = self._get_link(project_url, "project/analyses")
+            project_url = self._get_link(self.base_url, "projects")
+            analysis_submissions_url = self._get_link(project_url, "project/analyses",
+                                                      target_dict={
+                                                          "key": "identifier",
+                                                          "value": project_id
+                                                      })
         except StopIteration:
             logging.error(f"The given project ID doesn't exist: {project_id}")
             raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
@@ -249,14 +252,19 @@ class IridaAPI(object):
             analysis_submission_id = analysis_submission["identifier"]
 
             try:
-                analysis_results_url = self._get_link(self.base_url + f"/api/analysisSubmissions/{analysis_submission_id}",
-                                                      "analysis")
-            except KeyError:
+                analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
+                analysis_results_url = self._get_link(analysis_submission_url, "analysis",
+                                                      target_dict={
+                                                          "key": "identifier",
+                                                          "value": analysis_submission_id
+                                                      })
+            except exceptions.IridaKeyError:
                 """
                 Catches an exception if an analysis submission does not contain an analysis result.
                 Ignores the exception and continue with searching the rest of analysis submissions
                 """
-                logging.info(f"No analysis result exists for analysis submission id [{analysis_submission_id}]. Moving on...")
+                logging.info(
+                    f"No analysis result exists for analysis submission id [{analysis_submission_id}]. Skipping...")
                 continue
             else:
                 analysis_result = self._get_resource(analysis_results_url).json()["resource"]
@@ -271,8 +279,3 @@ class IridaAPI(object):
         :return boolean:
         """
         return analysis_result["analysisType"]["type"] == "AMR_DETECTION"
-
-
-
-
-
