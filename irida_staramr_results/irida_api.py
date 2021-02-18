@@ -202,7 +202,7 @@ class IridaAPI(object):
     def get_amr_analysis_results(self, project_id):
         """
         Get all AMR detection analysis results from a project id.
-        If nothing is found, it returns an empty array.
+        If no analysis results found in the project, it returns an empty array.
         :param project_id:
         :return analysis_result_list:
         """
