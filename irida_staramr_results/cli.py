@@ -3,8 +3,8 @@ import argparse
 import logging
 import exceptions
 
-from version import __version__
-from irida_api import IridaAPI
+from irida_staramr_results.version import __version__
+from irida_staramr_results.irida_api import IridaAPI
 
 
 def init_argparser():
