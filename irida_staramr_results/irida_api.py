@@ -1,19 +1,37 @@
-import json
+import ast
 import logging
-import exceptions
-
-from urllib.error import HTTPError
+import threading
+from http import HTTPStatus
+from urllib.error import URLError
 from urllib.parse import urljoin, urlparse
 from rauth import OAuth2Service
 from requests import ConnectionError
+from requests.adapters import HTTPAdapter
+
+from . import exceptions
+
+# For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
+# can subscribe to. That way, the api module is seperate, and other applications could use the emits/messages in their
+# own setups.
 
 
 class IridaAPI(object):
 
-    def __init__(self, client_id, client_secret, base_url, username, password, max_wait_time=20, http_max_retries=5):
+    def __init__(self, client_id, client_secret,
+                 base_url, username, password, max_wait_time=20, http_max_retries=5):
         """
-        Creates a session by connecting to IRIDA REST API via OAuth2Service with password grant type.
+        Create OAuth2Session and store it
+
+        arguments:
+            client_id -- client_id for creating access token.
+            client_secret -- client_secret for creating access token.
+            base_url -- url of the IRIDA server
+            username -- username for server
+            password -- password for given username
+
+        return ApiCalls object
         """
+
         self.client_id = client_id
         self.client_secret = client_secret
         self.base_url = base_url
@@ -22,54 +40,110 @@ class IridaAPI(object):
         self.max_wait_time = max_wait_time
         self.http_max_retries = http_max_retries
 
-        self.access_token_url = '/oauth/token'
-
-        self.session = None
+        self._session_lock = threading.Lock()
+        self._session_set_externally = False
         self._create_session()
+        self.cached_projects = None
+        self.cached_samples = {}
+
+        # these two are used when sending signals to the progress module
+        self._current_upload_project_id = None
+        self._current_upload_sample_name = None
+
+    @property
+    def _session(self):
+        try:  # Todo: rework this code without the try/catch/finally and odd exception raise
+            self._session_lock.acquire()
+            response = self._session_instance.options(self.base_url)
+            if response.status_code != HTTPStatus.OK:
+                raise Exception
+            else:
+                logging.debug("Existing session still works, going to reuse it.")
+        except Exception:
+            logging.debug("Token is probably expired, going to get a new session.")
+            self._reinitialize_session()
+        finally:
+            self._session_lock.release()
+
+        return self._session_instance
+
+    def _reinitialize_session(self):
+        oauth_service = self._get_oauth_service()
+        access_token = self._get_access_token(oauth_service)
+        _sess = oauth_service.get_session(access_token)
+        # We add a HTTPAdapter with max retries so we don't fail out if one request gets lost
+        _sess.mount('https://', HTTPAdapter(max_retries=self.http_max_retries))
+        _sess.mount('http://', HTTPAdapter(max_retries=self.http_max_retries))
+        self._session_instance = _sess
+
+    def _create_session(self):
+        """
+        create session to be re-used until expiry for get and post calls
+
+        returns session (OAuth2Session object)
+        """
+
+        def validate_url_form(url):
+            """
+                offline 'validation' of url. parse through url and see if its malformed
+            """
+            parsed = urlparse(url)
+            valid = len(parsed.scheme) > 0
+            return valid
+
+        if self.base_url[-1:] != "/":
+            self.base_url = self.base_url + "/"
+        if not validate_url_form(self.base_url):
+            logging.error("Cannot create session. {} is not a valid URL".format(self.base_url))
+            raise exceptions.IridaConnectionError("Cannot create session." + self.base_url + " is not a valid URL")
+
+        self._reinitialize_session()
 
     def _get_oauth_service(self):
         """
-        Get oauth service to be used to get access token
-        :return OAuthService
+        get oauth service to be used to get access token
+
+        returns oauthService
         """
 
-        url = urlparse(self.base_url)
-
-        access_token_url = urljoin(self.base_url, "api/oauth/token")
+        access_token_url = urljoin(self.base_url, "oauth/token")
         oauth_service = OAuth2Service(
             client_id=self.client_id,
             client_secret=self.client_secret,
             name="irida",
             access_token_url=access_token_url,
-            base_url= url.scheme + "://" + url.netloc
+            base_url=self.base_url
         )
 
         return oauth_service
 
     def _get_access_token(self, oauth_service):
         """
-        Get access token to be used to get session from oauth_service
+        get access token to be used to get session from oauth_service
 
-        :param
-            oauth_service -- OAuth2Service from _get_oauth_service
+        arguments:
+            oauth_service -- O2AuthService from get_oauth_service
 
-        :return access token
+        returns access token
         """
 
-        def token_decoder(d):
+        def token_decoder(return_dict):
             """
-            Safely parse given dictionary
-            :param d: returned dictionary (access token)
-            :return: evaluated dictionary
+            safely parse given dictionary
+
+            arguments:
+                return_dict -- access token dictionary
+
+            returns evaluated dictionary
             """
+            # It is supposedly safer to decode bytes to string and then use ast.literal_eval than just use eval()
             try:
-                irida_dict = json.loads(d.decode('utf-8'))
+                irida_dict = ast.literal_eval(return_dict.decode("utf-8"))
             except (SyntaxError, ValueError):
                 # SyntaxError happens when something that looks nothing like a token is returned (ex: 404 page)
                 # ValueError happens with the path returns something that looks like a token, but is invalid
                 #   (ex: forgetting the /api/ part of the url)
-                raise ConnectionError("Unexpected response from server, URL may be incorrect.")
-
+                raise ConnectionError("Unexpected response from server, URL may be incorrect")
             return irida_dict
 
         params = {
@@ -83,86 +157,83 @@ class IridaAPI(object):
         }
 
         try:
-            # TODO: Add a max retry everytime it attempts to connect. At the moment, program keep running.
-            #  (Cannot detect failed connection?)
             access_token = oauth_service.get_access_token(
                 decoder=token_decoder, **params)
         except ConnectionError as e:
-            logging.error("Can not connect to IRIDA.")
-            raise ConnectionError("Could not connect to the IRIDA server. URL may be incorrect."
-                                  f"IRIDA returned with error message: {e.args}")
+            logging.error("Can not connect to IRIDA")
+            raise exceptions.IridaConnectionError("Could not connect to the IRIDA server. URL may be incorrect."
+                                                  " IRIDA returned with error message: {}".format(e.args))
         except KeyError as e:
-            logging.error("Can not get access token from IRIDA.")
-            raise Exception("Could not get access token from IRIDA. Credentials may be incorrect. "
-                            f"IRIDA returned with error message: {e.args}")
+            logging.error("Can not get access token from IRIDA")
+            raise exceptions.IridaConnectionError("Could not get access token from IRIDA. Credentials may be incorrect."
+                                                  " IRIDA returned with error message: {}".format(e.args))
 
         return access_token
 
-    def _create_session(self):
+    def _validate_url_existence(self, url):
         """
-        Creates oauth2session with oauth_service and access token.
+        tries to validate existence of given url by trying to open it.
+        true if HTTP OK and no errors when authenticating credentials
+        if errors or non HTTP.OK code occur, throws a IridaConnectionError
 
-        :return: oauth2session object
+        arguments:
+            url -- the url link to open and validate
+
+        returns
+            true if http response OK 200
+            raises IridaConnectionError otherwise
         """
-
-        oauth_service = self._get_oauth_service()
-        access_token = self._get_access_token(oauth_service)
-        session = oauth_service.get_session(access_token)
-
-        self.session = session
-
-    def _get_resource(self, url, headers=None):
-        """
-            Grabs a resource from irida rest api with the provide FULL resource endpoint url formatted in string
-
-            :param url: headers:
-            :return a response object
-        """
-
-        if headers is None:
-            headers = {"Accept": "*/*"}
-
         try:
-            # TODO: re-validate session, in case it already expires.
-            response = self.session.get(url, headers=headers)
-        except Exception as e:  # should this be a connection error?
-            logging.error("Failed to create a session with the IRIDA API. "
-                          "Session may have been expired or connection may have failed.")
-            raise exceptions.IridaConnectionError(f"No session found. Error message: {e.args}")
+            response = self._session.get(url)
+        except URLError as e:
+            logging.error("Could not connect to IRIDA, URL '{}' responded with: {}"
+                          "".format(url, str(e)))
+            raise exceptions.IridaConnectionError("Could not connect to IRIDA, URL '{}' responded with: {}"
+                                                  "".format(url, str(e)))
+        except Exception as e:
+            logging.error("Could not connect to IRIDA, non URLError Exception occurred. URL '{}' Error: {}"
+                          "".format(url, str(e)))
+            raise exceptions.IridaConnectionError("Could not connect to IRIDA, non URLError Exception occurred. "
+                                                  "URL '{}' Error: {}".format(url, str(e)))
 
-        # TODO: better response handler
-
-        if response.status_code not in range(200, 299):
-            raise HTTPError(url, response.status_code, "HTTPError occurred.", response.headers, None)
-
-        return response
+        if response.status_code == HTTPStatus.OK:
+            return True
+        else:
+            logging.error("Could not connect to IRIDA, URL '{}' responded with: {} {}"
+                          "".format(url, response.status_code, response.reason))
+            raise exceptions.IridaConnectionError("Could not connect to IRIDA, URL '{}' responded with: {} {}"
+                                                  "".format(url, response.status_code, response.reason))
 
     def _get_link(self, target_url, target_key, target_dict=None):
         """
-        Makes a call to target_url(api) expecting a json response
-        Tries to retrieve target_key from response to find link to resource
-        Raises exceptions if target_key not found or target_url is invalid
+        makes a call to target_url(api) expecting a json response
+        tries to retrieve target_key from response to find link to resource
+        raises exceptions if target_key not found or target_url is invalid
 
-        :param target_url: URL to retrieve link from
-        :param target_key: name of link (e.g projects or project/samples)
-        :param target_dict: optional dict containing key and value to search in targets.
-                            (e.g {key="identifier",value="100"} to retrieve where identifier=100)
+        arguments:
+            target_url -- URL to retrieve link from
+            target_key -- name of link (e.g projects or project/samples)
+            target_dict -- optional dict containing key and value to search
+                in targets.
+            (e.g {key="identifier",value="100"} to retrieve where
+                identifier=100)
 
-        :return: link if it exists
+        returns link if it exists
         """
 
-        logging.debug(f"irida_api._get_link: target_url: {target_url}, target_key: {target_key}.")
+        logging.debug("irida_api._get_link: target_url: {}, target_key: {}".format(target_url, target_key))
 
-        response = self._get_resource(target_url)
+        self._validate_url_existence(target_url)
+        response = self._session.get(target_url)
 
         if target_dict:  # we are targeting specific resources in the response
 
+            # TODO: This try except block has been added to log a crash that has occurred, to find the source.
             try:
                 resources_list = response.json()["resource"]["resources"]
             except KeyError as e:
-                # TODO: This try except block has been added to log a crash that has occurred, to find the source.
-                #   This is occurring for an unknown reason.
-                #   Once docs can be gathered displaying information, we can determine the source of the bug and fix it.
+                # This is occurring for an unknown reason.
+                # Once docs can be gathered displaying information, we can determine the source of the bug and fix it.
                 logging.error("Dumping json response from IRIDA:")
                 logging.error(str(response.json()))
                 logging.error("Dumping python KeyError:")
@@ -170,7 +241,6 @@ class IridaAPI(object):
                 error_txt = "Response from IRIDA Could not be parsed. Please show the log to your IRIDA Administrator."
                 logging.error(error_txt)
                 raise exceptions.IridaKeyError(error_txt)
-
             # try to get all keys from target_dict to our list or links
             try:
                 links_list = next(
@@ -179,23 +249,23 @@ class IridaAPI(object):
                 )
 
             except KeyError:
-                raise exceptions.IridaKeyError(target_dict["key"] + " not found. Available keys: "
-                                                                    ", ".join(resources_list[0].keys()))
+                raise exceptions.IridaKeyError(
+                    target_dict["key"] + " not found. Available keys: " ", ".join(resources_list[0].keys()))
 
             except StopIteration:
                 raise exceptions.IridaKeyError(target_dict["value"] + " not found.")
 
-        else:
+        else:  # get all the links in the response
             links_list = response.json()["resource"]["links"]
-
         try:
             ret_val = next(link["href"] for link in links_list
                            if link["rel"] == target_key)
+
         except StopIteration:
-            error_txt = target_key + " not found in links. Available links: " + \
-                        ", ".join([str(link["rel"]) for link in links_list])
-            logging.debug(error_txt)
-            raise exceptions.IridaKeyError(error_txt)
+            logging.debug(target_key + " not found in links. Available links: "
+                                       ", ".join([str(link["rel"]) for link in links_list]))
+            raise exceptions.IridaKeyError(target_key + " not found in links. Available links: "
+                                                        ", ".join([str(link["rel"]) for link in links_list]))
 
         return ret_val
 
@@ -211,7 +281,7 @@ class IridaAPI(object):
             project_analysis_submissions = self._get_analysis_submissions_from_projects(project_id)
         except KeyError:
             error_txt = f"The given project ID doesn't exist: {project_id}. "
-            raise exceptions.IridaKeyError(error_txt)
+            raise exceptions.IridaResourceError(error_txt)
 
         all_analysis_results = self._get_all_analysis_results(project_analysis_submissions)
 
@@ -238,7 +308,7 @@ class IridaAPI(object):
             logging.error(f"The given project ID doesn't exist: {project_id}")
             raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
 
-        response = self._get_resource(analysis_submissions_url)
+        response = self._session.get(analysis_submissions_url)
         analysis_submissions = response.json()["resource"]["resources"]
 
         return analysis_submissions
@@ -267,7 +337,7 @@ class IridaAPI(object):
                     f"No analysis result exists for analysis submission id [{analysis_submission_id}]. Skipping...")
                 continue
             else:
-                analysis_result = self._get_resource(analysis_results_url).json()["resource"]
+                analysis_result = self._session.get(analysis_results_url).json()["resource"]
                 analysis_result_list.append(analysis_result)
 
         return analysis_result_list

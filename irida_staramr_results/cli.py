@@ -51,18 +51,14 @@ def main():
         amr_analyses = irida.get_amr_analysis_results(args_dict["project"])
 
     # TODO: better exception handler
-    except ConnectionError as e:
+    except exceptions.IridaConnectionError as e:
         error_txt = f"Could not connect to IRIDA. Error: {e}"
         raise Exception(error_txt)
-    except exceptions.IridaKeyError as e:
+    except exceptions.IridaResourceError as e:
         project_id = args_dict["project"]
         error_txt = f"The given project ID doesn't exist: {project_id}. "
         logging.error(error_txt)
         raise exceptions.IridaKeyError(error_txt + f"Error: {e}")
-    except Exception as e:
-        error_txt = f"An Error has occurred. Error: {e}"
-        logging.error(error_txt)
-        raise Exception(error_txt)
 
 
 # This is called when the program is run for the first time
