@@ -92,8 +92,7 @@ def _init_api(args_dict, config_dict):
             args_dict["username"],
             args_dict["password"])
     except exceptions.IridaConnectionError:
-        logging.error("Unable to connect to IRIDA REST API. Ensure your client and account credentials are correct.")
-        print(config_dict, args_dict)
+        logging.error("Unable to connect to IRIDA REST API. Ensure your client info and account credentials are correct.")
         sys.exit(1)
 
     return irida_api
