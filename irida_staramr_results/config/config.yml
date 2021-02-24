@@ -6,7 +6,7 @@
 ## For more connection information for the IRIDA API, please see https://irida.corefacility.ca/documentation/user/administrator/#managing-system-clients.
 
 ## Uncomment to set a default client information for logging into IRIDA.
-base-url: http://10.10.50.155:8080
+base-url: http://10.10.50.155:8080/api
 client-id: neptune
 client-secret: 6KlqQOEzEy55GBrQdIa28DE9wFk7Y9RkDRmYfCCUKR
 
