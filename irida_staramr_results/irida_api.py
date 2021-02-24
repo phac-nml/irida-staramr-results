@@ -227,6 +227,7 @@ class IridaAPI(object):
         response = self._session.get(target_url)
 
         if target_dict:  # we are targeting specific resources in the response
+
             # TODO: This try except block has been added to log a crash that has occurred, to find the source.
             try:
                 resources_list = response.json()["resource"]["resources"]
@@ -250,6 +251,7 @@ class IridaAPI(object):
             except KeyError:
                 raise exceptions.IridaKeyError(
                     target_dict["key"] + " not found. Available keys: " ", ".join(resources_list[0].keys()))
+
             except StopIteration:
                 raise exceptions.IridaKeyError(target_dict["value"] + " not found.")
 
@@ -258,11 +260,13 @@ class IridaAPI(object):
         try:
             ret_val = next(link["href"] for link in links_list
                            if link["rel"] == target_key)
+
         except StopIteration:
             logging.debug(target_key + " not found in links. Available links: "
                                        ", ".join([str(link["rel"]) for link in links_list]))
             raise exceptions.IridaKeyError(target_key + " not found in links. Available links: "
                                                         ", ".join([str(link["rel"]) for link in links_list]))
+
         return ret_val
 
     def get_amr_analysis_results(self, project_id):
