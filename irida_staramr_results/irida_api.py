@@ -276,14 +276,12 @@ class IridaAPI(object):
         :param project_id:
         :return analysis_result_list:
         """
-
         try:
-            project_analysis_submissions = self._get_analysis_submissions_from_projects(project_id)
+            # Get all analysis results in project
+            all_analysis_results = self._get_all_analysis_results(project_id)
         except KeyError:
             error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaResourceError(error_txt)
-
-        all_analysis_results = self._get_all_analysis_results(project_analysis_submissions)
 
         # Filter AMR Detection results
         amr_analysis_results = [analysis_result for analysis_result in all_analysis_results if
@@ -291,7 +289,7 @@ class IridaAPI(object):
 
         return amr_analysis_results
 
-    def _get_analysis_submissions_from_projects(self, project_id):
+    def _get_analysis_submissions(self, project_id):
         """
         Returns an array of all analyses for a given project
         :param project_id:
@@ -313,7 +311,13 @@ class IridaAPI(object):
 
         return analysis_submissions
 
-    def _get_all_analysis_results(self, project_analysis_submissions):
+    def _get_all_analysis_results(self, project_id):
+
+        try:
+            project_analysis_submissions = self._get_analysis_submissions(project_id)
+        except KeyError:
+            error_txt = f"The given project ID doesn't exist: {project_id}. "
+            raise exceptions.IridaResourceError(error_txt)
 
         analysis_result_list = []
 
