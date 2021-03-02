@@ -6,7 +6,6 @@ import yaml
 import exceptions
 
 from irida_staramr_results.version import __version__
-from irida_staramr_results.config import DEFAULT_CONFIG_PATH
 from irida_staramr_results.irida_api import IridaAPI
 from irida_staramr_results import amr_writer
 
@@ -26,7 +25,7 @@ def init_argparser():
                                  help="This is your IRIDA account username.")
     argument_parser.add_argument("-pw", "--password", action="store",
                                  help="This is your IRIDA account password.")
-    argument_parser.add_argument("-c", "--config", action='store', default=DEFAULT_CONFIG_PATH,
+    argument_parser.add_argument("-c", "--config", action='store', required=True,
                                  help='Path to an alternative configuration file. '
                                       'This overrides the default config file in the config directory')
 
@@ -57,16 +56,16 @@ def _validate_args(args):
 def _parse_config(config_file_path):
     """
     Parse configuration YAML file provided by the user.
-    It assumes the file name to be "config.yml".
+    It assumes the file name to be "example-config.yml".
     :param config_file_path:
     :return config_dict:
     """
 
     try:
-        with open(config_file_path + "/config.yml", "r") as file:
+        with open(config_file_path, "r") as file:
             config_info = yaml.safe_load(file)
     except FileNotFoundError as e:
-        logging.error(f"No configuration file with the name 'config.yml' found in {config_file_path} path.")
+        logging.error(f"No configuration file found in {config_file_path}.")
         sys.exit(1)
 
     try:
@@ -74,7 +73,7 @@ def _parse_config(config_file_path):
                        "client_id": config_info["client-id"],
                        "client_secret": config_info["client-secret"]}
     except KeyError as key:
-        logging.error(f"No key {key} exists in config file. Ensure your client information in config.yml is correct.")
+        logging.error(f"No key {key} exists in config file. Ensure your client information in the configuration file is correct.")
         sys.exit(1)
 
     return config_dict
@@ -104,10 +103,6 @@ def main():
     Accepts commands from command line to be processed by the program.
     """
     argument_parser = init_argparser()
-
-    if len(sys.argv) == 1:
-        argument_parser.print_help()
-        sys.exit(1)
 
     args = argument_parser.parse_args()
 
