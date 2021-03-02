@@ -1,6 +1,7 @@
 import logging
 import sys
-import exceptions
+
+import irida_staramr_results.api.exceptions as exceptions
 
 
 def download_results(irida_api, project_id, output_name):

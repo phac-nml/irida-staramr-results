@@ -3,11 +3,11 @@ import argparse
 import logging
 import getpass
 import yaml
-import exceptions
 
 from irida_staramr_results.version import __version__
-from irida_staramr_results.irida_api import IridaAPI
+from irida_staramr_results.api.irida_api import IridaAPI
 from irida_staramr_results import amr_writer
+from irida_staramr_results.api import exceptions
 
 
 def init_argparser():
