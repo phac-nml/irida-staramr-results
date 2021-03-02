@@ -1,2 +1,5 @@
 rauth~=0.7.3
 requests~=2.24.0
+setuptools~=53.0.0
+yaml~=0.2.5
+pandas~=1.1.3

@@ -1,8 +1,39 @@
-# irida-staramr-results
+# IRIDA StarAMR Results
 
+IRIDA StarAMR Results program enables StarAMR analysis results that were run through IRIDA to be downloaded into a spreadsheet using the command line. 
+
+## Running from source code
+
+1. __Clone the repository:__
+   ```
+   > git clone https://github.com/phac-nml/irida-staramr-results.git
+   ```
+
+2. __Install and Build the Project__
+   ```
+   > make
+   > source .virtualenv/bin/activate
+   ```
+  
+
+3. __Configuration for IRIDA REST API:__
+   - You will need to create a client in IRIDA. Refer to [irida client configuration]() guide for more details.
+   - You will need to create you own configuration file in YAML. Refer to [example-config.yml](example-config.yml) provided for more information on how to format the file.
+    
+        #### config file fields:
+    
+        - `base-url`: The server URL to download results from. If you navigate to your instance of IRIDA in your web browser, the URL (after you’ve logged in) will often look like: https://irida.corefacility.ca/irida/. The URL you should enter into the Server URL field is that URL, with api/ at the end. So in the case of https://irida.corefacility.ca/irida/, you should enter the URL https://irida.corefacility.ca/irida/api/
+        -  `client-id`: The id from the IRIDA client you created
+        - `client-secret`: The id from the IRIDA client you created
+
+
+4. __Execute the program:__
+   - Enter the following command in the terminal: 
+        `````
+        > irida-staramr-result -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o out.xlsx
+        `````
 
 ## Legal
-
 
 Copyright Government of Canada 2021
 
