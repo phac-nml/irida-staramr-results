@@ -18,7 +18,7 @@ def init_argparser():
     argument_parser.add_argument("-v", "--version", action="version", version=f"{argument_parser.prog} {__version__}",
                                  help="The current version of irida-staramr-results.")
     argument_parser.add_argument("-p", "--project", action="store", required=True, type=int,
-                                 help="Project(s) to scan for StarAMR results.")
+                                 help="Required. Project(s) to scan for StarAMR results.")
     argument_parser.add_argument("-o", "--output", action="store", default="out.xlsx",
                                  help="The name of the output excel file.")
     argument_parser.add_argument("-u", "--username", action="store",
@@ -26,8 +26,7 @@ def init_argparser():
     argument_parser.add_argument("-pw", "--password", action="store",
                                  help="This is your IRIDA account password.")
     argument_parser.add_argument("-c", "--config", action='store', required=True,
-                                 help='Path to an alternative configuration file. '
-                                      'This overrides the default config file in the config directory')
+                                 help='Required. Path to a configuration file. ')
 
     return argument_parser
 
