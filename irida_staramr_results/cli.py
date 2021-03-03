@@ -1,13 +1,13 @@
-import sys
 import argparse
-import logging
 import getpass
+import logging
+import sys
+
 import yaml
-import exceptions
 
 from irida_staramr_results.version import __version__
-from irida_staramr_results.irida_api import IridaAPI
 from irida_staramr_results import amr_writer
+from irida_staramr_results.api import exceptions, IridaAPI
 
 
 def init_argparser():
@@ -63,7 +63,7 @@ def _parse_config(config_file_path):
 
     try:
         with open(config_file_path, "r") as file:
-            config_info = yaml.safe_load(file)
+            config_info = yaml.load(file, Loader=yaml.FullLoader)
     except FileNotFoundError as e:
         logging.error(f"No configuration file found in {config_file_path}.")
         sys.exit(1)
@@ -73,7 +73,13 @@ def _parse_config(config_file_path):
                        "client_id": config_info["client-id"],
                        "client_secret": config_info["client-secret"]}
     except KeyError as key:
-        logging.error(f"No key {key} exists in config file. Ensure your client information in the configuration file is correct.")
+        logging.error(f"No key {key} exists in config file."
+                      f"Ensure your client information in the configuration file is correct.")
+        sys.exit(1)
+    except TypeError as e:
+        print(e)
+        logging.error(f"Ensure your client information in the configuration file is formatted correctly. "
+                      f"See example-config.yml for guidance.")
         sys.exit(1)
 
     return config_dict
@@ -91,7 +97,8 @@ def _init_api(args_dict, config_dict):
             args_dict["username"],
             args_dict["password"])
     except exceptions.IridaConnectionError:
-        logging.error("Unable to connect to IRIDA REST API. Ensure your client info and account credentials are correct.")
+        logging.error("Unable to connect to IRIDA REST API. "
+                      "Ensure your client info and account credentials are correct.")
         sys.exit(1)
 
     return irida_api

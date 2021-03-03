@@ -1,6 +1,7 @@
 import logging
 import sys
-import exceptions
+
+from irida_staramr_results.api import exceptions
 
 
 def download_results(irida_api, project_id, output_name):
@@ -24,6 +25,7 @@ def download_results(irida_api, project_id, output_name):
 
     # TODO: on a separate PR, create a function that writes analysis to an excel file.
     # _write_to_excel(amr_analyses, output_name)
+
 
 """
 Future functionality:

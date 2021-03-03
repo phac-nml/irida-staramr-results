@@ -9,29 +9,29 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
    > git clone https://github.com/phac-nml/irida-staramr-results.git
    ```
 
-2. __Install and Build the Project__
+2. __Install and build the Project__
    ```
+   > cd irida-staramr-results
    > make
    > source .virtualenv/bin/activate
    ```
   
 
 3. __Configuration for IRIDA REST API:__
-   - You will need to create a client in IRIDA. Refer to [irida client configuration]() guide for more details.
-   - You will need to create you own configuration file in YAML. Refer to [example-config.yml](example-config.yml) provided for more information on how to format the file.
+   - You will need to create a client in IRIDA. Refer to [IRIDA client configuration](https://irida.corefacility.ca/documentation/user/administrator/#managing-system-clients) guide for more details.
+   - You will need to create your own configuration file in YAML. Refer to [example-config.yml](example-config.yml) for more information on how to format the file.
     
-        #### config file fields:
+        #### Config Fields:
     
         - `base-url`: The server URL to download results from. If you navigate to your instance of IRIDA in your web browser, the URL (after you’ve logged in) will often look like: https://irida.corefacility.ca/irida/. The URL you should enter into the Server URL field is that URL, with api/ at the end. So in the case of https://irida.corefacility.ca/irida/, you should enter the URL https://irida.corefacility.ca/irida/api/
-        -  `client-id`: The id from the IRIDA client you created
+        - `client-id`: The id from the IRIDA client you created
         - `client-secret`: The id from the IRIDA client you created
 
 
 4. __Execute the program:__
-   - Enter the following command in the terminal: 
-        `````
-        > irida-staramr-result -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o out.xlsx
-        `````
+    ```
+    > irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME>.xlsx
+    ```
 
 ## Legal
 

@@ -4,11 +4,12 @@ import threading
 from http import HTTPStatus
 from urllib.error import URLError
 from urllib.parse import urljoin, urlparse
-from rauth import OAuth2Service
+
 from requests import ConnectionError
 from requests.adapters import HTTPAdapter
+from rauth import OAuth2Service
 
-from . import exceptions
+from irida_staramr_results.api import exceptions
 
 # For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
 # can subscribe to. That way, the api module is separate, and other applications could use the emits/messages in their
