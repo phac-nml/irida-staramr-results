@@ -1,0 +1,12 @@
+# -----------------------------
+# IRIDA API Connection Settings
+# -----------------------------
+
+## This is an example configuration file for the irida-staramr-results.py program.
+## For more connection information for the IRIDA API, please see https://irida.corefacility.ca/documentation/user/administrator/#managing-system-clients.
+
+## Uncomment to set a default client information for logging into IRIDA.
+#base-url: https://irida.corefacility.ca/irida/api/
+#client-id: admin
+#client-secret: password
+
