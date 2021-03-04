@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 PYTHON=python3
-PIP=pip
+PIP=pip3
 
 requirements: clean env
 	. .virtualenv/bin/activate
