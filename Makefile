@@ -1,9 +1,10 @@
 SHELL=/bin/bash
 PYTHON=python3
 PIP=pip3
+ACTIVATOR=source
 
 requirements: clean env
-	. .virtualenv/bin/activate
+	${ACTIVATOR} .virtualenv/bin/activate
 	${PIP} install -e .
 
 wheel:
@@ -11,7 +12,7 @@ wheel:
 
 env:
 	${PYTHON} -m venv .virtualenv
-	. .virtualenv/bin/activate
+	${ACTIVATOR} .virtualenv/bin/activate
 	${PIP} install --upgrade wheel pip
 
 clean:
