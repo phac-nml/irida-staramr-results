@@ -6,9 +6,11 @@ import sys
 import yaml
 
 from irida_staramr_results.version import __version__
-from irida_staramr_results import amr_writer
+from irida_staramr_results import staramr_downloader
 from irida_staramr_results.api import exceptions, IridaAPI
 
+logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 def init_argparser():
     argument_parser = argparse.ArgumentParser(
@@ -111,17 +113,22 @@ def main():
     """
     argument_parser = init_argparser()
 
+    logging.info("Parsing arguments...")
     args = argument_parser.parse_args()
 
+    logging.info("Validating arguments...")
     args_dict = _validate_args(args)
 
+    logging.info("Parsing configuration file...")
     config_dict = _parse_config(args_dict["config"])
 
     # Connect to IRIDA REST API
+    logging.info("Initializing IRIDA REST API...")
     irida_api = _init_api(args_dict, config_dict)
 
     # Start downloading results
-    amr_writer.download_results(irida_api, args_dict["project"], args_dict["output"])
+    logging.info(f"Start downloading analysis results for project [{args_dict['project']}]...")
+    staramr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"])
 
 
 # This is called when the program is run for the first time

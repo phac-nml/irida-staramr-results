@@ -10,6 +10,7 @@ from requests.adapters import HTTPAdapter
 from rauth import OAuth2Service
 
 from irida_staramr_results.api import exceptions
+from irida_staramr_results.staramr_output import StarAmrOutput
 
 # For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
 # can subscribe to. That way, the api module is separate, and other applications could use the emits/messages in their
@@ -354,3 +355,27 @@ class IridaAPI(object):
         :return boolean:
         """
         return analysis_result["analysisType"]["type"] == "AMR_DETECTION"
+
+    def get_result_files(self, analysis):
+        """
+        Returns a list of analysis results output files response type.
+        :param analysis:
+        :return:
+        """
+
+        # list of analysis result files formatted tab separated value or text files.
+        analysis_result_files = []
+
+        for link in analysis["links"]:
+            if "outputFile" in link["rel"]:
+                file_url = link["href"]
+                response_json = self._session.get(file_url)
+                response_text = self._session.get(file_url, headers={'Accept': 'text/plain'})
+
+                file_type = self._get_file_type(response_json)
+                result = StarAmrOutput(identifier=response_json.json()["resource"]["identifier"],
+                                       name=response_json.json()["resource"]["label"],
+                                       content=response_text.content)
+
+                analysis_result_files.append(result)
+        return analysis_result_files
