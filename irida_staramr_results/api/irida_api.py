@@ -384,36 +384,36 @@ class IridaAPI(object):
             "staramr-detailed-summary.tsv",
             "staramr-settings.txt",
             "staramr-summary.tsv",
-            "rgi-summary.tsv",
             "staramr-plasmidfinder.tsv",
-            "rgi-report.json",
             "staramr-mlst.tsv"
         ]
 
-        file_urls = list()
         result_files = list()
 
         # get file urls base on file_list
-        try:
-            for file_key in file_list:
-                file_urls.append(self._get_file_url(analysis_submission_id, file_key))
-        except exceptions.IridaKeyError:
-            """
-            Catches an exception if an analysis submission does not contain an analysis result.
-            """
-            logging.info(f"No analysis result exists for analysis submission id "
-                         f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
-                         f"and ensure the analysis status is COMPLETED.")
-
-
-        for url in file_urls:
-
+        for file_key in file_list:
+            try:
+                file_url = self._get_file_url(analysis_submission_id, file_key)
+            except exceptions.IridaKeyError:
+                """
+                Catches an exception if an analysis submission does not contain an analysis result.
+                For our case, this shouldn't happen since we use completed amr type analysis submission given 
+                by the caller (amr_downloader).
+                """
+                logging.info(f"No analysis result exists for analysis submission id "
+                             f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
+                             f"and ensure the analysis status is COMPLETED.")
             # response containing json
-            response_json = self._session.get(url)
+            response_json = self._session.get(file_url)
 
             # response containing text (actual file contents)
-            response_txt = self._session.get(url, headers={"Accept": "text/plain"})
-            result_files.append(AmrOutput(response_json.json()["resource"], response_txt.content))
+            response_txt = self._session.get(file_url, headers={"Accept": "text/plain"})
+
+            # create output object
+            output = AmrOutput( file_json=response_json.json()["resource"],
+                                file_txt=response_txt.content,
+                                file_key=file_key)
+            result_files.append(output)
 
         return result_files
 
