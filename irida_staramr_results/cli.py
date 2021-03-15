@@ -11,6 +11,7 @@ from irida_staramr_results.api import exceptions, IridaAPI
 
 logging.basicConfig(level=logging.INFO)
 
+
 def init_argparser():
     argument_parser = argparse.ArgumentParser(
         prog="irida-staramr-results",
