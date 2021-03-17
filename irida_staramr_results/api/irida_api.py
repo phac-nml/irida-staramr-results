@@ -364,7 +364,7 @@ class IridaAPI(object):
             """
             logging.info(f"No analysis result exists for analysis submission id "
                          f"[{analysis_submission_id}]. Moving on...")
-            analysis_result = dict()
+            analysis_result = {}
         else:
             analysis_result = self._session.get(analysis_results_url).json()["resource"]
 
@@ -388,7 +388,7 @@ class IridaAPI(object):
             "staramr-mlst.tsv"
         ]
 
-        result_files = list()
+        result_files = []
 
         # get file urls base on file_list
         for file_key in file_list:
@@ -400,7 +400,7 @@ class IridaAPI(object):
                 For our case, this shouldn't happen since we use completed amr type analysis submission given 
                 by the caller (amr_downloader).
                 """
-                logging.info(f"No analysis result exists for analysis submission id "
+                logging.error(f"No analysis result exists for analysis submission id "
                              f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
                              f"and ensure the analysis status is COMPLETED.")
             # response containing json

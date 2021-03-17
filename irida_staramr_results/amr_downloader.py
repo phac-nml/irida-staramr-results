@@ -18,7 +18,7 @@ def download_all_results(irida_api, project_id, output_file_name):
     amr_completed_analysis_submissions = irida_api.get_amr_analysis_submissions(project_id)
 
     if len(amr_completed_analysis_submissions) < 1:
-        logging.info(f"No completed amr analysis submission type for project id [{project_id}].")
+        logging.warning(f"No completed amr analysis submission type for project id [{project_id}].")
 
     for a in amr_completed_analysis_submissions:
         result_files = irida_api.get_analysis_result_files(a["identifier"])
