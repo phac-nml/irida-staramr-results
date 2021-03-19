@@ -10,6 +10,7 @@ from requests.adapters import HTTPAdapter
 from rauth import OAuth2Service
 
 from irida_staramr_results.api import exceptions
+from irida_staramr_results.amr_output import AmrOutput
 
 # For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
 # can subscribe to. That way, the api module is separate, and other applications could use the emits/messages in their
@@ -270,34 +271,62 @@ class IridaAPI(object):
 
         return ret_val
 
-    def get_amr_analysis_results(self, project_id):
+    def _is_result_type_amr(self, analysis_result):
         """
-        Get all AMR detection analysis results from a project id.
+        Checks if the analysis result is an amr detection type.
+        This function is used in `_is_submission_type_amr()`
+        :param analysis_result:
+        :return boolean:
+        """
+        return analysis_result["analysisType"]["type"] == "AMR_DETECTION"
+
+    def _is_submission_type_amr(self, analysis_submission):
+        """
+        Returns true if the analysis result of the submission is type amr.
+            1. Checks if the analysis submission is completed.
+            2. Gets the analysis results and check its type.
+        This function is used in get_amr_analysis_submissions().
+        :param analysis_submission:
+        :return:
+        """
+
+        if analysis_submission["analysisState"] == "COMPLETED":
+            # If an analysis state of the submission is COMPLETED,
+            # we can retrieve its analysis results and find out its type.
+            analysis_result = self._get_analysis_result(analysis_submission["identifier"])
+            return self._is_result_type_amr(analysis_result)
+
+        return False
+
+    def get_amr_analysis_submissions(self, project_id):
+        """
+        Get COMPLETED (not error) analysis submissions of AMR DETECTION type from a project id.
         If no analysis results found in the project, it returns an empty array.
         :param project_id:
-        :return analysis_result_list:
+        :return amr_analysis_submissions:
         """
         try:
-            # Get all analysis results in project
-            all_analysis_results = self._get_all_analysis_results(project_id)
+            project_analysis_submissions = self._get_analysis_submissions(project_id)
         except KeyError:
             error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaResourceError(error_txt)
 
-        # Filter AMR Detection results
-        amr_analysis_results = [analysis_result for analysis_result in all_analysis_results if
-                                self._is_type_amr(analysis_result)]
+        # Filter AMR Detection type
+        amr_analysis_submissions = [analysis_submission for analysis_submission in project_analysis_submissions
+                                    if self._is_submission_type_amr(analysis_submission)]
 
-        return amr_analysis_results
+        return amr_analysis_submissions
 
     def _get_analysis_submissions(self, project_id):
         """
-        Returns an array of all analyses for a given project
+        Returns an array of ALL analysis submissions (regardless of the type) for a given project
         :param project_id:
-        :return project_analysis_list:
+        :return analysis_submissions:
         """
+
+        project_url = self._get_link(self.base_url, "projects")
+
         try:
-            project_url = self._get_link(self.base_url, "projects")
             analysis_submissions_url = self._get_link(project_url, "project/analyses",
                                                       target_dict={
                                                           "key": "identifier",
@@ -312,45 +341,94 @@ class IridaAPI(object):
 
         return analysis_submissions
 
-    def _get_all_analysis_results(self, project_id):
+    def _get_analysis_result(self, analysis_submission_id):
+        """
+        Returns an analysis result json object based on the analysis submission id.
+        Note: Not all analysis submissions will be COMPLETED, thus, not all will have analysis results.
+            It will return an empty object if no results exists.
+        :param analysis_submission_id:
+        :return analysis_result:
+        """
+        analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         try:
-            project_analysis_submissions = self._get_analysis_submissions(project_id)
-        except KeyError:
-            error_txt = f"The given project ID doesn't exist: {project_id}. "
-            raise exceptions.IridaResourceError(error_txt)
+            analysis_results_url = self._get_link(analysis_submission_url, "analysis",
+                                                  target_dict={
+                                                      "key": "identifier",
+                                                      "value": analysis_submission_id
+                                                  })
+        except exceptions.IridaKeyError:
+            """
+            Catches an exception if an analysis submission does not contain an analysis result.
+            It will handle it by returning an empty dictionary
+            """
+            logging.info(f"No analysis result exists for analysis submission id "
+                         f"[{analysis_submission_id}]. Moving on...")
+            analysis_result = {}
+        else:
+            analysis_result = self._session.get(analysis_results_url).json()["resource"]
 
-        analysis_result_list = []
+        return analysis_result
 
-        for analysis_submission in project_analysis_submissions:
+    def get_analysis_result_files(self, analysis_submission_id):
+        """
+        Returns a list of AmrOutput, which are file objects, given analysis submission id.
+        This function accepts analysis_submission_id with COMPLETED analysis status and an AMR_DETECTION type,
+            otherwise, it will thrown an exception.
+        :param analysis_submission_id:
+        :return amr_analysis_submissions:
+        """
+        # TODO: store this list in a config file
+        file_list = [
+            "staramr-resfinder.tsv",
+            "staramr-detailed-summary.tsv",
+            "staramr-settings.txt",
+            "staramr-summary.tsv",
+            "staramr-plasmidfinder.tsv",
+            "staramr-mlst.tsv"
+        ]
 
-            analysis_submission_id = analysis_submission["identifier"]
+        result_files = []
 
+        # get file urls base on file_list
+        for file_key in file_list:
             try:
-                analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
-                analysis_results_url = self._get_link(analysis_submission_url, "analysis",
-                                                      target_dict={
-                                                          "key": "identifier",
-                                                          "value": analysis_submission_id
-                                                      })
+                file_url = self._get_file_url(analysis_submission_id, file_key)
             except exceptions.IridaKeyError:
                 """
                 Catches an exception if an analysis submission does not contain an analysis result.
-                Ignores the exception and continue with searching the rest of analysis submissions
+                For our case, this shouldn't happen since we use completed amr type analysis submission given 
+                by the caller (amr_downloader).
                 """
-                logging.info(
-                    f"No analysis result exists for analysis submission id [{analysis_submission_id}]. Skipping...")
-                continue
-            else:
-                analysis_result = self._session.get(analysis_results_url).json()["resource"]
-                analysis_result_list.append(analysis_result)
+                logging.error(f"No analysis result exists for analysis submission id "
+                             f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
+                             f"and ensure the analysis status is COMPLETED.")
+            # response containing json
+            response_json = self._session.get(file_url)
 
-        return analysis_result_list
+            # response containing text (actual file contents)
+            response_txt = self._session.get(file_url, headers={"Accept": "text/plain"})
 
-    def _is_type_amr(self, analysis_result):
+            # create output object
+            output = AmrOutput( file_json=response_json.json()["resource"],
+                                file_txt=response_txt.content,
+                                file_key=file_key)
+            result_files.append(output)
+
+        return result_files
+
+    def _get_file_url(self, analysis_submission_id, file_key):
         """
-        Checks if the analysis result is an amr detection type.
-        :param analysis_result:
-        :return boolean:
+        Returns a URL of a file given an file key (file name with extension)
+        :param analysis_submission_id: Needed for api call.
+        :param file_key:
+        :return:
         """
-        return analysis_result["analysisType"]["type"] == "AMR_DETECTION"
+        analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
+        analysis_result_url = self._get_link(analysis_submission_url, "analysis", target_dict={
+            "key": "identifier",
+            "value": analysis_submission_id
+        })
+
+        file_url = self._get_link(analysis_result_url, "outputFile/" + file_key)
+        return file_url
