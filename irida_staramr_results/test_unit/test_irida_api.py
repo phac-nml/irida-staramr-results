@@ -144,10 +144,88 @@ class IridaApiTest(unittest.TestCase):
 
         self.setup()
 
-        # TODO: fill fake data
-        fake_none_completed_submission_list = {"key": "value"}
-        fake_all_completed_submission_list = {"key": "value"}
-        fake_one_complete_submission_list = {"key": "value"}
+        fake_none_completed_submission_list = [
+            {
+                "name": "Sample1",
+                "analysisState": "ERROR",
+                "label": "Sample1",
+                "links": [],
+                "identifier": "1"
+            },
+            {
+                "name": "Sample2",
+                "analysisState": "ERROR",
+                "label": "Sample2",
+                "links": [],
+                "identifier": "2"
+            }
+        ]
+        fake_all_completed_submission_list = [
+            {
+                "name": "Sample1",
+                "analysisState": "COMPLETED",
+                "label": "Sample1",
+                "links": [
+                    {
+                        "rel": "analysis",
+                        "href": "http://localhost:8080/api/analysisSubmissions/1/analysis"
+                    },
+                ],
+                "identifier": "1"
+            },
+            {
+                "name": "Sample2",
+                "analysisState": "COMPLETED",
+                "label": "Sample2",
+                "links": [
+                    {
+                        "rel": "analysis",
+                        "href": "http://localhost:8080/api/analysisSubmissions/2/analysis"
+                    },
+                ],
+                "identifier": "2"
+            },
+            {
+                "name": "Sample3",
+                "analysisState": "COMPLETED",
+                "label": "Sample3",
+                "links": [
+                    {
+                        "rel": "analysis",
+                        "href": "http://localhost:8080/api/analysisSubmissions/3/analysis"
+                    },
+                ],
+                "identifier": "3"
+            }
+        ]
+        fake_one_complete_submission_list = [
+            {
+                "name": "Sample1",
+                "analysisState": "ERROR",
+                "label": "Sample1",
+                "links": [],
+                "identifier": "1"
+            },
+            {
+                "name": "Sample2",
+                "analysisState": "COMPLETED",
+                "label": "Sample2",
+                "links": [
+                    {
+                        "rel": "analysis",
+                        "href": "http://localhost:8080/api/analysisSubmissions/2/analysis"
+                    },
+                ],
+                "identifier": "2"
+            },
+            {
+                "name": "Sample3",
+                "analysisState": "ERROR",
+                "label": "Sample3",
+                "links": [],
+                "identifier": "3"
+            }
+        ]
         fake_empty_submission_list = {}
 
         # No completed amr submissions must return empty list
@@ -173,11 +251,6 @@ class IridaApiTest(unittest.TestCase):
         return_submission_list = IridaAPI.get_amr_analysis_submissions(IridaAPI, self.fake_project_id)
         mock_submission_type.assert_called()
         self.assertTrue(len(return_submission_list) is 0)
-
-        pass
-
-
-
 
 
 if __name__ == '__main__':
