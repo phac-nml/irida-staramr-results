@@ -51,4 +51,4 @@ def _write_to_excel(result_files, output_file_name):
 
             logging.info(f"Appending {file_sheet_name} data to {output_file_name}.")
             data_frame = pd.read_csv(io.StringIO(str(file_content, 'utf-8')), delimiter="\t")
-            data_frame.to_excel(writer, sheet_name=file_sheet_name)
+            data_frame.to_excel(writer, sheet_name=file_sheet_name, index=False)
