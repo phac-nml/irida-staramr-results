@@ -14,7 +14,8 @@ def download_all_results(irida_api, project_id, output_file_name):
     :return:
     """
 
-    logging.info(f"Requesting completed amr analysis submissions for project id [{project_id}]")
+    logging.info(f"Requesting completed amr analysis submissions for project id [{project_id}]. "
+                 f"This may take a while...")
     amr_completed_analysis_submissions = irida_api.get_amr_analysis_submissions(project_id)
 
     if len(amr_completed_analysis_submissions) < 1:
@@ -50,5 +51,21 @@ def _write_to_excel(result_files, output_file_name):
             file_sheet_name = file.get_sheet_name()
 
             logging.info(f"Appending {file_sheet_name} data to {output_file_name}.")
-            data_frame = pd.read_csv(io.StringIO(str(file_content, 'utf-8')), delimiter="\t")
+            data_frame = _convert_to_df(file_content)
             data_frame.to_excel(writer, sheet_name=file_sheet_name, index=False)
+
+
+def _convert_to_df(file_content):
+    """
+    Converts dictionary or tsv contents to a data frame
+    :param file_content:
+    :return data_frame:
+    """
+    if type(file_content) is dict:
+        data = list(file_content.items())
+        data_frame = pd.DataFrame(data, columns=["Key", "Value"])
+    else:
+        data_frame = pd.read_csv(io.StringIO(file_content), delimiter="\t")
+
+    return data_frame
+
