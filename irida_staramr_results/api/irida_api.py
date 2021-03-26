@@ -412,8 +412,6 @@ class IridaAPI(object):
             # response containing text (actual file contents)
             response_txt = self._session.get(file_url, headers={"Accept": "text/plain"})
 
-            test = response_json.json()
-
             # create output object
             output = AmrOutput( file_json=response_json.json()["resource"],
                                 file_txt=response_txt.content,
