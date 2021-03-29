@@ -305,6 +305,7 @@ class IridaAPI(object):
         :param project_id:
         :return amr_analysis_submissions:
         """
+
         try:
             project_analysis_submissions = self._get_analysis_submissions(project_id)
         except KeyError:
@@ -314,6 +315,8 @@ class IridaAPI(object):
         # Filter AMR Detection type
         amr_analysis_submissions = [analysis_submission for analysis_submission in project_analysis_submissions
                                     if self._is_submission_type_amr(analysis_submission)]
+        if len(amr_analysis_submissions) < 1:
+            logging.warning(f"No Completed AMR Detection type found in project [{project_id}].")
 
         return amr_analysis_submissions
 

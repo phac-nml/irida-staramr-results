@@ -119,7 +119,9 @@ def main():
     config_dict = _parse_config(args_dict["config"])
 
     # Connect to IRIDA REST API
+    logging.info("Connecting to IRIDA API...")
     irida_api = _init_api(args_dict, config_dict)
+    logging.info("Successfully connected to IRIDA API.")
 
     # Start downloading results
     amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"])

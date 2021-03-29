@@ -16,7 +16,20 @@ class AmrOutput(object):
         self.file_key = file_key
 
     def get_contents(self):
-        return self.file_content
+        # convert bytes contents to string
+        contents_str = str(self.file_content, 'utf-8')
+
+        # reformat settings.txt contents to a key:value pairs.
+        if "settings.txt" in self.file_info["label"]:
+            settings_dict = {}
+            lines = contents_str.split("\n")
+            for line in lines:
+                settings_row = line.split("=")
+                if len(settings_row) > 1:
+                    settings_dict[settings_row[0].strip()] = settings_row[1].strip()
+            return settings_dict
+
+        return contents_str
 
     def get_file_name(self):
         return self.file_info["label"]
