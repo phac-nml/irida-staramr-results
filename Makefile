@@ -10,6 +10,10 @@ requirements: clean env
 wheel:
 	${PYTHON} setup.py sdist bdist_wheel
 
+unittests: clean env
+	${ACTIVATOR} .virtualenv/bin/activate
+	${PYTHON} -m unittest discover -s test_unit -t irida_staramr_results
+
 env:
 	${PYTHON} -m venv .virtualenv
 	${ACTIVATOR} .virtualenv/bin/activate

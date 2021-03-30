@@ -33,6 +33,14 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
     > irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME>.xlsx
     ```
 
+### Running Tests
+#### Unit test
+1. Running the unit tests can be done with the command:
+    ```
+    > make unittests
+    ```
+
+
 ## Legal
 
 Copyright Government of Canada 2021
