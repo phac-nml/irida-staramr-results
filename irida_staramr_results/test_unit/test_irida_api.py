@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import patch
 
-
 from irida_staramr_results.api.irida_api import IridaAPI
 from irida_staramr_results.api import exceptions
 
@@ -9,248 +8,98 @@ from irida_staramr_results.api import exceptions
 class IridaApiTest(unittest.TestCase):
 
     def setup(self):
-        print("Set up Test")
-        self.fake_project_id = 1
-        self.fake_analysis_submission_list = [
-            {
-                "name": "Sample1",
-                "workflowId": "0001",
-                "inputParameters": {
-                    "input1": "0",
-                },
-                "createdDate": "0",
-                "modifiedDate": "0",
-                "updateSamples": "0",
-                "analysisDescription": "",
-                "emailPipelineResultCompleted": "false",
-                "emailPipelineResultError": "false",
-                "remoteInputDataId": "0001",
-                "remoteWorkflowId": "0001",
-                "analysisState": "COMPLETED",
-                "analysisCleanedState": "NOT_CLEANED",
-                "priority": "MEDIUM",
-                "automated": "false",
-                "label": "Sample1",
-                "links": [
-                    {
-                        "rel": "input/unpaired",
-                        "href": "http://localhost:8080/api/analysisSubmissions/1/sequenceFiles/unpaired"
-                    },
-                    {
-                        "rel": "input/paired",
-                        "href": "http://localhost:8080/api/analysisSubmissions/1/sequenceFiles/pairs"
-                    },
-                    {
-                        "rel": "analysis",
-                        "href": "http://localhost:8080/api/analysisSubmissions/1/analysis"
-                    },
-                    {
-                        "rel": "self",
-                        "href": "http://localhost:8080/api/analysisSubmissions/2"
-                    }
-                ],
-                "identifier": "1"
-            },
-            {
-                "name": "Sample2",
-                "workflowId": "0002",
-                "inputParameters": {
-                    "input1": "0",
-                },
-                "createdDate": "0",
-                "modifiedDate": "0",
-                "updateSamples": "0",
-                "analysisDescription": "",
-                "emailPipelineResultCompleted": "false",
-                "emailPipelineResultError": "false",
-                "remoteInputDataId": "0002",
-                "remoteWorkflowId": "0002",
-                "analysisState": "ERROR",
-                "analysisCleanedState": "NOT_CLEANED",
-                "priority": "MEDIUM",
-                "automated": "false",
-                "label": "Sample2",
-                "links": [
-                    {
-                        "rel": "input/unpaired",
-                        "href": "http://localhost:8080/api/analysisSubmissions/2/sequenceFiles/unpaired"
-                    },
-                    {
-                        "rel": "input/paired",
-                        "href": "http://localhost:8080/api/analysisSubmissions/2/sequenceFiles/pairs"
-                    },
-                    {
-                        "rel": "self",
-                        "href": "http://localhost:8080/api/analysisSubmissions/2"
-                    }
-                ],
-                "identifier": "2"
-            }
-        ]
+        print("\nStarting " + self.__module__ + ": " + self._testMethodName)
 
     def tearDown(self):
         pass
 
-    @patch('irida_staramr_results.api.irida_api.IridaAPI._get_analysis_submissions')
-    def test_get_amr_analysis_submissions_error(self, mock_analysis_submissions_func):
+    @patch("irida_staramr_results.api.irida_api.IridaAPI._get_analysis_result")
+    @patch("irida_staramr_results.api.irida_api.IridaAPI._is_result_type_amr")
+    def test_is_submission_type_amr(self, mock_get_analysis_result, mock_is_result_type_amr):
+        """
+        Test _is_submission_type_amr function calls and return values
+        :param mock_get_analysis_result:
+        :param mock_is_result_type_amr:
+        :return:
+        """
+
+
+        fake_data_completed = {"analysisState": "COMPLETED", "identifier": 1}
+        fake_data_error = {"analysisState": "ERROR", "identifier": 1}
+
+        # Test with COMPLETED data.
+        IridaAPI._is_submission_type_amr(IridaAPI, fake_data_completed)
+        self.assertTrue(mock_get_analysis_result.called)
+        self.assertTrue(mock_is_result_type_amr.called)
+
+        mock_get_analysis_result.reset_mock()
+        mock_is_result_type_amr.reset_mock()
+
+        # Test with ERROR data.
+        res = IridaAPI._is_submission_type_amr(IridaAPI, fake_data_error)
+        self.assertFalse(mock_get_analysis_result.called)
+        self.assertFalse(res)
+
+    def test_is_results_type_amr(self):
+        """
+        Test _is_results_type_amr return values
+        :return:
+        """
+        fake_amr_type = {"analysisType": {"type": "AMR_DETECTION"}}
+        fake_none_amr_type = {"analysisType": {"type": "NOT_AMR"}}
+
+        res_true = IridaAPI._is_result_type_amr(IridaAPI, fake_amr_type)
+        res_false = IridaAPI._is_result_type_amr(IridaAPI, fake_none_amr_type)
+
+        self.assertTrue(res_true)
+        self.assertFalse(res_false)
+
+    @patch("irida_staramr_results.api.irida_api.IridaAPI._get_analysis_submissions")
+    @patch("irida_staramr_results.api.irida_api.IridaAPI._is_submission_type_amr")
+    def test_get_amr_analysis_submissions_return_value(self, mock_is_submission_type_amr, mock_get_analysis_submissions):
+        """
+        Test get_amr_analysis_submissions method to return what is expected
+        :param mock_is_submission_type_amr:
+        :param mock_get_analysis_submissions:
+        :return:
+        """
+        def _is_submission_type_stub(args):
+            return args
+
+        fake_data_all_true = [True, True, True]
+        fake_data_all_false = [False, False, False]
+        fake_data_some_true = [False, False, True, False]
+
+        # Test [True, True, True] to return 3 values
+        mock_get_analysis_submissions.return_value = fake_data_all_true
+        mock_is_submission_type_amr.side_effect = _is_submission_type_stub
+        res = IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
+        self.assertEqual(len(res), 3)
+
+        # Test [False, False, False] to return 0 values
+        mock_get_analysis_submissions.return_value = fake_data_all_false
+        mock_is_submission_type_amr.side_effect = _is_submission_type_stub
+        res = IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
+        self.assertEqual(len(res), 0)
+
+        # Test [False, False, True, False] to return 1 value
+        mock_get_analysis_submissions.return_value = fake_data_some_true
+        mock_is_submission_type_amr.side_effect = _is_submission_type_stub
+        res = IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
+        self.assertEqual(len(res), 1)
+
+    @patch("irida_staramr_results.api.irida_api.IridaAPI._get_analysis_submissions")
+    def test_get_amr_analysis_submissions_error(self, mock_get_analysis_submissions):
         """
         Test get_amr_analysis_submissions to raise an error as when expected.
-        :param mock_analysis_submissions:
-        :param mock_type:
+        :param mock_get_analysis_submissions:
         :return:
         """
 
-        self.setup()
+        mock_get_analysis_submissions.side_effect = KeyError
 
-        # Test project id not found (IridaResourceError)
-        mock_analysis_submissions_func.side_effect = exceptions.IridaResourceError("project not found")
         with self.assertRaises(exceptions.IridaResourceError):
-            IridaAPI.get_amr_analysis_submissions(IridaAPI, project_id=self.fake_project_id)
-
-        # Test when receiving an None type.
-        mock_analysis_submissions_func.side_effect = None
-        with self.assertRaises(exceptions.IridaResourceError):
-            IridaAPI.get_amr_analysis_submissions(IridaAPI, project_id=self.fake_project_id)
-
-    @patch('irida_staramr_results.api.irida_api.IridaAPI._is_submission_type_amr')
-    @patch('irida_staramr_results.api.irida_api.IridaAPI._get_analysis_submissions')
-    def test_get_amr_analysis_submission_calls(self, mock_submission_type, mock_analysis_submissions_func):
-        """
-        Test the the function is_submission_type_amr is called
-        :param mock_submission_type:
-        :param mock_analysis_submissions_func:
-        :return:
-        """
-
-        self.setup()
-
-        # Empty analysis submissions list
-        mock_analysis_submissions_func.return_value = []
-        IridaAPI.get_amr_analysis_submissions(IridaAPI, self.fake_project_id)
-        mock_submission_type.assert_called()
-
-        # Non-empty analysis submissions list
-        mock_analysis_submissions_func.return_value = self.fake_analysis_submission_list
-
-    @patch('irida_staramr_results.api.irida_api.IridaAPI._get_analysis_submissions')
-    @patch('irida_staramr_results.api.irida_api.IridaAPI._is_submission_type_amr')
-    def test_get_amr_analysis_submission_return_value(self, mock_submission_type, mock_analysis_submissions_func):
-        """
-        Test return values of get_amr_analysis_submission.
-        :param mock_submission_type:
-        :param mock_analysis_submissions_func:
-        :return:
-        """
-
-        self.setup()
-
-        fake_none_completed_submission_list = [
-            {
-                "name": "Sample1",
-                "analysisState": "ERROR",
-                "label": "Sample1",
-                "links": [],
-                "identifier": "1"
-            },
-            {
-                "name": "Sample2",
-                "analysisState": "ERROR",
-                "label": "Sample2",
-                "links": [],
-                "identifier": "2"
-            }
-        ]
-        fake_all_completed_submission_list = [
-            {
-                "name": "Sample1",
-                "analysisState": "COMPLETED",
-                "label": "Sample1",
-                "links": [
-                    {
-                        "rel": "analysis",
-                        "href": "http://localhost:8080/api/analysisSubmissions/1/analysis"
-                    },
-                ],
-                "identifier": "1"
-            },
-            {
-                "name": "Sample2",
-                "analysisState": "COMPLETED",
-                "label": "Sample2",
-                "links": [
-                    {
-                        "rel": "analysis",
-                        "href": "http://localhost:8080/api/analysisSubmissions/2/analysis"
-                    },
-                ],
-                "identifier": "2"
-            },
-            {
-                "name": "Sample3",
-                "analysisState": "COMPLETED",
-                "label": "Sample3",
-                "links": [
-                    {
-                        "rel": "analysis",
-                        "href": "http://localhost:8080/api/analysisSubmissions/3/analysis"
-                    },
-                ],
-                "identifier": "3"
-            }
-        ]
-        fake_one_complete_submission_list = [
-            {
-                "name": "Sample1",
-                "analysisState": "ERROR",
-                "label": "Sample1",
-                "links": [],
-                "identifier": "1"
-            },
-            {
-                "name": "Sample2",
-                "analysisState": "COMPLETED",
-                "label": "Sample2",
-                "links": [
-                    {
-                        "rel": "analysis",
-                        "href": "http://localhost:8080/api/analysisSubmissions/2/analysis"
-                    },
-                ],
-                "identifier": "2"
-            },
-            {
-                "name": "Sample3",
-                "analysisState": "ERROR",
-                "label": "Sample3",
-                "links": [],
-                "identifier": "3"
-            }
-        ]
-        fake_empty_submission_list = {}
-
-        # No completed amr submissions must return empty list
-        mock_analysis_submissions_func.return_value = fake_none_completed_submission_list
-        return_submission_list = IridaAPI.get_amr_analysis_submissions(IridaAPI, self.fake_project_id)
-        mock_submission_type.assert_called()
-        self.assertTrue(len(return_submission_list) is 0)
-
-        # All completed amr submissions must return all
-        mock_analysis_submissions_func.return_value = fake_all_completed_submission_list
-        return_submission_list = IridaAPI.get_amr_analysis_submissions(IridaAPI, self.fake_project_id)
-        mock_submission_type.assert_called()
-        self.assertTrue(len(return_submission_list) is len(fake_all_completed_submission_list))
-
-        # One completed amr submissions must not return all and only one
-        mock_analysis_submissions_func.return_value = fake_one_complete_submission_list
-        return_submission_list = IridaAPI.get_amr_analysis_submissions(IridaAPI, self.fake_project_id)
-        mock_submission_type.assert_called()
-        self.assertTrue(len(return_submission_list) is 1)
-
-        # Empty dictionary must return an empty list
-        mock_analysis_submissions_func.return_value = fake_empty_submission_list
-        return_submission_list = IridaAPI.get_amr_analysis_submissions(IridaAPI, self.fake_project_id)
-        mock_submission_type.assert_called()
-        self.assertTrue(len(return_submission_list) is 0)
+            IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
 
 
 if __name__ == '__main__':
