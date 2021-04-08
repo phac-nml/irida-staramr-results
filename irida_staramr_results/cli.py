@@ -29,6 +29,8 @@ def init_argparser():
                                  help="This is your IRIDA account password.")
     argument_parser.add_argument("-c", "--config", action='store', required=True,
                                  help='Required. Path to a configuration file. ')
+    argument_parser.add_argument("-a", "--append", action='store_true',
+                                 help="Append all analysis results to a single output file.")
 
     return argument_parser
 
@@ -51,7 +53,8 @@ def _validate_args(args):
             'password': args.password,
             'config': args.config,
             'project': args.project,
-            'output': args.output}
+            'output': args.output,
+            'append': args.append}
 
 
 def _parse_config(config_file_path):
@@ -124,7 +127,7 @@ def main():
     logging.info("Successfully connected to IRIDA API.")
 
     # Start downloading results
-    amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"])
+    amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["append"])
 
 
 # This is called when the program is run for the first time
