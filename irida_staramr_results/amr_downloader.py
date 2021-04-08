@@ -47,7 +47,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
 
 def _get_output_file_name(timestamp):
     """
-    Converts unix timestamp to standard time and generates an output file name as the standard time.
+    Converts unix timestamp to standard time and generates an output file name as the UTC standard time.
     Formatted as YYYY-mm-ddTHH-MM-SS.
     :param timestamp: unix timestamp in millisecond
     :return: output name as <standard time>.xlsx
