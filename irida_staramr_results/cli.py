@@ -3,11 +3,10 @@ import getpass
 import logging
 import sys
 
-import yaml
-
 from irida_staramr_results.version import __version__
 from irida_staramr_results import amr_downloader
 from irida_staramr_results.api import exceptions, IridaAPI
+import irida_staramr_results.parser as parser
 
 logging.basicConfig(level=logging.INFO)
 
@@ -57,38 +56,6 @@ def _validate_args(args):
             'append': args.append}
 
 
-def _parse_config(config_file_path):
-    """
-    Parse configuration YAML file provided by the user.
-    It assumes the file name to be "example-config.yml".
-    :param config_file_path:
-    :return config_dict:
-    """
-
-    try:
-        with open(config_file_path, "r") as file:
-            config_info = yaml.load(file, Loader=yaml.FullLoader)
-    except FileNotFoundError as e:
-        logging.error(f"No configuration file found in {config_file_path}.")
-        sys.exit(1)
-
-    try:
-        config_dict = {"base_url": config_info["base-url"],
-                       "client_id": config_info["client-id"],
-                       "client_secret": config_info["client-secret"]}
-    except KeyError as key:
-        logging.error(f"No key {key} exists in config file."
-                      f"Ensure your client information in the configuration file is correct.")
-        sys.exit(1)
-    except TypeError as e:
-        print(e)
-        logging.error(f"Ensure your client information in the configuration file is formatted correctly. "
-                      f"See example-config.yml for guidance.")
-        sys.exit(1)
-
-    return config_dict
-
-
 def _init_api(args_dict, config_dict):
     """
     Connects to IRIDA RESTful API and returns an irida_api instance.
@@ -119,7 +86,7 @@ def main():
 
     args_dict = _validate_args(args)
 
-    config_dict = _parse_config(args_dict["config"])
+    config_dict = parser.parse_config(args_dict["config"])
 
     # Connect to IRIDA REST API
     logging.info("Connecting to IRIDA API...")

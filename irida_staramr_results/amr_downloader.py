@@ -1,6 +1,7 @@
 import io
 import os
 import logging
+import datetime
 
 import pandas as pd
 
@@ -38,9 +39,21 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _files_to_data_frames(result_files)
             logging.info(f"Creating a file for analysis [{a['name']}]. ")
+            output_file_name = _unix_time_to_standard_time(a["createdDate"])
             _write_data_frames_to_excel(data_frames, output_file_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
+
+
+def _unix_time_to_standard_time(timestamp):
+    """
+    Converts unix timestamp to standard time and generates an output file name as the standard time.
+    Formatted as YYYY-mm-ddTHH-MM-SS.
+    :param timestamp: unix timestamp in millisecond
+    :return: output name as <standard time>.xlsx
+    """
+    date = datetime.datetime.utcfromtimestamp(timestamp/1000)
+    return date.strftime('%Y-%m-%dT%H-%M-%S') + ".xlsx"
 
 
 def _write_data_frames_to_excel(data_frames, output_file_name):
@@ -51,11 +64,6 @@ def _write_data_frames_to_excel(data_frames, output_file_name):
     :param output_file_name:
     :return:
     """
-
-    # delete existing file if exist
-    if os.path.isfile(output_file_name):
-        logging.info(f"Removing existing {output_file_name}.")
-        os.remove(output_file_name)
 
     # create new file
     logging.info(f"Creating a new file {output_file_name}.")

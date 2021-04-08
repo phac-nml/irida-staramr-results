@@ -1,0 +1,1 @@
+from irida_staramr_results.parser import parse_config
