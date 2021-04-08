@@ -24,16 +24,20 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
 
     if mode_append:
         # In append mode, collect all the data into dataframes, one per unique file name, then write a single file.
+        logging.info(f"Append mode: Writing all results data in one output file...")
         data_frames = {}
         for a in amr_completed_analysis_submissions:
+            logging.info(f"Appending analysis [{a['name']}]. ")
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _append_file_data_to_existing_data_frames(result_files, data_frames)
         _write_data_frames_to_excel(data_frames, output_file_name)
     else:
         # Base case, write the collection of files into a file, one file per analysis
+        logging.info(f"Non-append mode: Writing each results data per analysis in their separate output file...")
         for a in amr_completed_analysis_submissions:
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _files_to_data_frames(result_files)
+            logging.info(f"Creating a file for analysis [{a['name']}]. ")
             _write_data_frames_to_excel(data_frames, output_file_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
@@ -58,7 +62,7 @@ def _write_data_frames_to_excel(data_frames, output_file_name):
     with pd.ExcelWriter(output_file_name, engine='xlsxwriter') as writer:
         # append data frame to file
         for file_sheet_name in data_frames:
-            logging.info(f"Appending {file_sheet_name} data to {output_file_name}.")
+            logging.debug(f"Writing {file_sheet_name} data to {output_file_name}.")
             data_frames[file_sheet_name].to_excel(writer, sheet_name=file_sheet_name, index=False)
 
 
@@ -112,4 +116,3 @@ def _convert_to_df(file_content):
         data_frame = pd.read_csv(io.StringIO(file_content), delimiter="\t")
 
     return data_frame
-
