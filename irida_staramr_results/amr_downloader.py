@@ -81,7 +81,8 @@ def _append_file_data_to_existing_data_frames(results_files, data_frames):
     The data_frames can be an empty dict
     :param results_files: a list of files to be converted into dataframes, and added or appended to the data_frames dict
     :param data_frames: a dictionary of filename:dataframe pairs
-    :return: list of dataframe objects with data from input appended, one per unique file name
+    :return: an updated dictionary of dataframe objects containing the newly appended data per filename.
+             example: {'filename1':dataframe1, 'filename2':dataframe2, ...}
     """
 
     for file in results_files:
