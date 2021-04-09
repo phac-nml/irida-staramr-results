@@ -26,9 +26,5 @@ def parse_config(config_file_path):
         logging.error(f"No key {key} exists in config file."
                       f"Ensure your client information in the configuration file is correct.")
         raise parsers.exceptions.ConfigInformationError()
-    except TypeError:
-        logging.error(f"Ensure your client information in the configuration file is formatted correctly. "
-                      f"See example-config.yml for guidance.")
-        raise parsers.exceptions.ConfigInformationError()
 
     return config_dict

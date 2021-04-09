@@ -4,7 +4,6 @@ class ConfigInformationError(Exception):
     Reasons could be:
      - a key:value was missing
      - field was spelled incorrectly
-     - formatting is incorrect
 
      See example-config.yml for guidance.
     """
