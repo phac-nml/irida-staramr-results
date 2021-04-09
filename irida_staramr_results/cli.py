@@ -4,9 +4,7 @@ import logging
 import sys
 
 from irida_staramr_results.version import __version__
-from irida_staramr_results import amr_downloader
-from irida_staramr_results import api
-from irida_staramr_results import parsers
+from irida_staramr_results import amr_downloader, api, parsers
 
 
 logging.basicConfig(level=logging.INFO)
