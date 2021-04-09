@@ -5,8 +5,9 @@ import sys
 
 from irida_staramr_results.version import __version__
 from irida_staramr_results import amr_downloader
-from irida_staramr_results.api import exceptions, IridaAPI
-import irida_staramr_results.parser as parser
+from irida_staramr_results import api
+from irida_staramr_results import parsers
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,13 +62,13 @@ def _init_api(args_dict, config_dict):
     Connects to IRIDA RESTful API and returns an irida_api instance.
     """
     try:
-        irida_api = IridaAPI(
+        irida_api = api.IridaAPI(
             config_dict["client_id"],
             config_dict["client_secret"],
             config_dict["base_url"],
             args_dict["username"],
             args_dict["password"])
-    except exceptions.IridaConnectionError:
+    except api.exceptions.IridaConnectionError:
         logging.error("Unable to connect to IRIDA REST API. "
                       "Ensure your client info and account credentials are correct.")
         sys.exit(1)
@@ -86,7 +87,14 @@ def main():
 
     args_dict = _validate_args(args)
 
-    config_dict = parser.parse_config(args_dict["config"])
+    try:
+        config_dict = parsers.parse_config(args_dict["config"])
+    except parsers.exceptions.ConfigFileNotFoundError:
+        logging.error("Configuration file not found.")
+        sys.exit(1)
+    except parsers.exceptions.ConfigInformationError:
+        logging.error("An error occurred related to the information of the config file.")
+        sys.exit(1)
 
     # Connect to IRIDA REST API
     logging.info("Connecting to IRIDA API...")
