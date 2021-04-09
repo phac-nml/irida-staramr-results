@@ -19,8 +19,8 @@ def init_argparser():
                                  help="The current version of irida-staramr-results.")
     argument_parser.add_argument("-p", "--project", action="store", required=True, type=int,
                                  help="Required. Project(s) to scan for StarAMR results.")
-    argument_parser.add_argument("-o", "--output", action="store", default="out.xlsx",
-                                 help="The name of the output excel file.")
+    argument_parser.add_argument("-o", "--output", action="store", required=True,
+                                 help="Required. The name of the output excel file.")
     argument_parser.add_argument("-u", "--username", action="store",
                                  help="This is your IRIDA account username.")
     argument_parser.add_argument("-pw", "--password", action="store",
@@ -46,6 +46,8 @@ def _validate_args(args):
     if args.password is None:
         print("Enter your IRIDA password: ")
         args.password = getpass.getpass()
+    if ".xlsx" in args.output:
+        args.output = args.output.strip(".xlsx")
 
     return {'username': args.username,
             'password': args.password,

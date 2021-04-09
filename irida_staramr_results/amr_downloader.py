@@ -18,6 +18,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
 
     logging.info(f"Requesting completed amr analysis submissions for project id [{project_id}]. "
                  f"This may take a while...")
+
     amr_completed_analysis_submissions = irida_api.get_amr_analysis_submissions(project_id)
 
     if len(amr_completed_analysis_submissions) < 1:
@@ -39,21 +40,21 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _files_to_data_frames(result_files)
             logging.info(f"Creating a file for analysis [{a['name']}]. ")
-            output_file_name = _get_output_file_name(a["createdDate"])
+            output_file_name = _get_output_file_name(output_file_name, a["createdDate"])
             _write_data_frames_to_excel(data_frames, output_file_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
 
 
-def _get_output_file_name(timestamp):
+def _get_output_file_name(output_file_name, timestamp):
     """
     Converts unix timestamp to standard time and generates an output file name as the UTC standard time.
     Formatted as YYYY-mm-ddTHH-MM-SS.
     :param timestamp: unix timestamp in millisecond
-    :return: output name as <standard time>.xlsx
+    :return: output name as <output-file-name>-<standard time>
     """
     date = datetime.datetime.utcfromtimestamp(timestamp/1000)
-    return date.strftime('%Y-%m-%dT%H-%M-%S') + ".xlsx"
+    return output_file_name + "-" + date.strftime('%Y-%m-%dT%H-%M-%S')
 
 
 def _write_data_frames_to_excel(data_frames, output_file_name):
@@ -67,15 +68,15 @@ def _write_data_frames_to_excel(data_frames, output_file_name):
 
     # delete existing file if exist
     if os.path.isfile(output_file_name):
-        logging.info(f"Removing existing {output_file_name}.")
-        os.remove(output_file_name)
+        logging.info(f"Removing existing {output_file_name}.xlsx.")
+        os.remove(output_file_name+".xlsx")
 
     # create new file
-    logging.info(f"Creating a new file {output_file_name}.")
-    with pd.ExcelWriter(output_file_name, engine='xlsxwriter') as writer:
+    logging.info(f"Creating a new file {output_file_name}.xlsx.")
+    with pd.ExcelWriter(output_file_name+".xlsx", engine='xlsxwriter') as writer:
         # append data frame to file
         for file_sheet_name in data_frames:
-            logging.debug(f"Writing {file_sheet_name} data to {output_file_name}.")
+            logging.debug(f"Writing {file_sheet_name} data to {output_file_name}.xlsx.")
             data_frames[file_sheet_name].to_excel(writer, sheet_name=file_sheet_name, index=False)
 
 
