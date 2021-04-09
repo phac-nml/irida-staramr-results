@@ -6,7 +6,6 @@ import sys
 def parse_config(config_file_path):
     """
     Parse configuration YAML file provided by the user.
-    It assumes the file name to be "example-config.yml".
     :param config_file_path:
     :return config_dict:
     """
