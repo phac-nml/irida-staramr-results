@@ -25,10 +25,12 @@ def init_argparser():
                                  help="This is your IRIDA account username.")
     argument_parser.add_argument("-pw", "--password", action="store",
                                  help="This is your IRIDA account password.")
-    argument_parser.add_argument("-c", "--config", action='store', required=True,
-                                 help='Required. Path to a configuration file. ')
-    argument_parser.add_argument("-a", "--append", action='store_true',
+    argument_parser.add_argument("-c", "--config", action="store", required=True,
+                                 help="Required. Path to a configuration file. ")
+    argument_parser.add_argument("-a", "--append", action="store_true",
                                  help="Append all analysis results to a single output file.")
+    argument_parser.add_argument("-d", "--date", action="store",
+                                 help="Download only results of the analysis that were created since this date.")
 
     return argument_parser
 
@@ -54,7 +56,8 @@ def _validate_args(args):
             'config': args.config,
             'project': args.project,
             'output': args.output,
-            'append': args.append}
+            'append': args.append,
+            'date': args.date}
 
 
 def _init_api(args_dict, config_dict):
@@ -102,7 +105,8 @@ def main():
     logging.info("Successfully connected to IRIDA API.")
 
     # Start downloading results
-    amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["append"])
+    amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["append"],
+                                        args_dict["date"])
 
 
 # This is called when the program is run for the first time
