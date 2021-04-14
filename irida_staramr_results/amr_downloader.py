@@ -40,8 +40,8 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _files_to_data_frames(result_files)
             logging.info(f"Creating a file for analysis [{a['name']}]. ")
-            output_file_name = _get_output_file_name(output_file_name, a["createdDate"])
-            _write_data_frames_to_excel(data_frames, output_file_name)
+            out_name = _get_output_file_name(output_file_name, a["createdDate"])
+            _write_data_frames_to_excel(data_frames, out_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
 
