@@ -46,15 +46,28 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
     logging.info(f"Download complete for project id [{project_id}].")
 
 
-def _get_output_file_name(output_file_name, timestamp):
+def _get_output_file_name(prefix_name, timestamp):
     """
-    Converts unix timestamp to standard time and generates an output file name as the UTC standard time.
-    Formatted as YYYY-mm-ddTHH-MM-SS.
+    Generates an output file name. This method is called from the main downloader function when the mode is non-append.
+        - Converts unix timestamp to UTC.
+    :param prefix_name: the name added before the time.
     :param timestamp: unix timestamp in millisecond
-    :return: output name as <output-file-name>-<standard time>
+    :return: output name as <prefix_name>-YYYY-mm-ddTHH-MM-SS.
     """
+
     date = datetime.datetime.utcfromtimestamp(timestamp/1000)
-    return output_file_name + "-" + date.strftime('%Y-%m-%dT%H-%M-%S')
+    date_formatted = date.strftime('%Y-%m-%dT%H-%M-%S')
+
+    output_file_name = prefix_name + "-" + date_formatted
+
+    # if filename already exists, add an increment number
+    increment = 1
+    while os.path.isfile(output_file_name + ".xlsx"):
+        output_file_name = prefix_name + str(increment) + "-" + date_formatted
+        increment = increment + 1
+        logging.info(f"File name already exists, {output_file_name}.xlsx generated.")
+
+    return output_file_name
 
 
 def _write_data_frames_to_excel(data_frames, output_file_name):
