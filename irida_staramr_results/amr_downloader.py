@@ -79,11 +79,6 @@ def _write_data_frames_to_excel(data_frames, output_file_name):
     :return:
     """
 
-    # delete existing file if exist
-    if os.path.isfile(output_file_name):
-        logging.info(f"Removing existing {output_file_name}.xlsx.")
-        os.remove(output_file_name+".xlsx")
-
     # create new file
     logging.info(f"Creating a new file {output_file_name}.xlsx.")
     with pd.ExcelWriter(output_file_name+".xlsx", engine='xlsxwriter') as writer:
