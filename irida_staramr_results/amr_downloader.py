@@ -1,9 +1,11 @@
 import io
 import os
 import logging
-import datetime
+from datetime import datetime
 
 import pandas as pd
+
+_directory_name = ""
 
 
 def download_all_results(irida_api, project_id, output_file_name, mode_append):
@@ -24,6 +26,12 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
     if len(amr_completed_analysis_submissions) < 1:
         logging.warning(f"No completed amr analysis submission type for project id [{project_id}].")
 
+    global _directory_name
+    _directory_name = "staramr-results-" + datetime.now().strftime("%Y-%m-%dT-%H-%M-%S")
+    logging.info(f"Creating directory name {_directory_name} to store results files.")
+    os.mkdir(_directory_name)
+
+
     if mode_append:
         # In append mode, collect all the data into dataframes, one per unique file name, then write a single file.
         logging.info(f"Append mode: Writing all results data in one output file...")
@@ -32,7 +40,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
             logging.info(f"Appending analysis [{a['name']}]. ")
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _append_file_data_to_existing_data_frames(result_files, data_frames)
-        _write_data_frames_to_excel(data_frames, output_file_name)
+        _data_frames_to_excel(data_frames, output_file_name)
     else:
         # Base case, write the collection of files into a file, one file per analysis
         logging.info(f"Non-append mode: Writing each results data per analysis in their separate output file...")
@@ -41,7 +49,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
             data_frames = _files_to_data_frames(result_files)
             logging.info(f"Creating a file for analysis [{a['name']}]. ")
             out_name = _get_output_file_name(output_file_name, a["createdDate"])
-            _write_data_frames_to_excel(data_frames, out_name)
+            _data_frames_to_excel(data_frames, out_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
 
@@ -55,7 +63,7 @@ def _get_output_file_name(prefix_name, timestamp):
     :return: output name as <prefix_name>-YYYY-mm-ddTHH-MM-SS.
     """
 
-    date = datetime.datetime.utcfromtimestamp(timestamp/1000)
+    date = datetime.utcfromtimestamp(timestamp/1000)
     date_formatted = date.strftime('%Y-%m-%dT%H-%M-%S')
 
     output_file_name = prefix_name + "-" + date_formatted
@@ -70,7 +78,7 @@ def _get_output_file_name(prefix_name, timestamp):
     return output_file_name
 
 
-def _write_data_frames_to_excel(data_frames, output_file_name):
+def _data_frames_to_excel(data_frames, output_file_name):
     """
     Writes data_frames to the output file.
     Each dataframe is appended as a separate sheet.
@@ -81,7 +89,8 @@ def _write_data_frames_to_excel(data_frames, output_file_name):
 
     # create new file
     logging.info(f"Creating a new file {output_file_name}.xlsx.")
-    with pd.ExcelWriter(output_file_name+".xlsx", engine='xlsxwriter') as writer:
+    target_path = f"{_directory_name}/{output_file_name}.xlsx"
+    with pd.ExcelWriter(target_path, engine='xlsxwriter') as writer:
         # append data frame to file
         for file_sheet_name in data_frames:
             logging.debug(f"Writing {file_sheet_name} data to {output_file_name}.xlsx.")
