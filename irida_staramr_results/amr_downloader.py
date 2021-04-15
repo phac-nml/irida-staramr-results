@@ -1,20 +1,21 @@
 import io
 import os
 import logging
-from datetime import datetime
 
+from datetime import datetime
 import pandas as pd
 
 _directory_name = ""
 
 
-def download_all_results(irida_api, project_id, output_file_name, mode_append):
+def download_all_results(irida_api, project_id, output_file_name, mode_append, target_timestamp):
     """
     Main function for downloading StarAMR results to an excel file.
     :param irida_api:
     :param project_id:
     :param output_file_name:
     :param mode_append: boolean, appends all file data together when True
+    :param target_timestamp:
     :return:
     """
 
@@ -32,6 +33,10 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
     logging.info(f"Creating directory name {_directory_name} to store results files.")
     os.mkdir(_directory_name)
 
+
+    # Filter analysis created since target date (in timestamp)
+    amr_completed_analysis_submissions = [a for a in amr_completed_analysis_submissions
+                                          if a["createdDate"] >= target_timestamp]
 
     if mode_append:
         # In append mode, collect all the data into dataframes, one per unique file name, then write a single file.

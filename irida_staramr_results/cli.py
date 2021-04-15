@@ -2,6 +2,7 @@ import argparse
 import getpass
 import logging
 import sys
+from datetime import datetime, timezone
 
 from irida_staramr_results.version import __version__
 from irida_staramr_results import amr_downloader, api, parsers
@@ -38,8 +39,9 @@ def init_argparser():
 def _validate_args(args):
     """
     Validates argument input by the users and returns a dictionary of required information from arguments.
-    If user does not include username and password in arguments,
-    the program prompts the user to enter it.
+        - If user does not include username and password in arguments, the program prompts the user to enter it.
+        - If user specify ".xlsx" for the output name, this method removes it.
+        - Converts date (in UTC) to unix timestamp. If not specified, it will be set to 0
     :param args:
     :return dictionary:
     """
@@ -50,6 +52,10 @@ def _validate_args(args):
         args.password = getpass.getpass()
     if args.output.endswith(".xlsx"):
         args.output = args.output[:-len(".xlsx")]
+    if args.date is None:
+        args.date = 0
+    else:
+        args.date = utc_to_timestamp(args.date)
 
     return {'username': args.username,
             'password': args.password,
@@ -58,6 +64,19 @@ def _validate_args(args):
             'output': args.output,
             'append': args.append,
             'date': args.date}
+
+
+def utc_to_timestamp(target_date):
+    """
+    Converts date in UTC to unix timestamp in milliseconds. Assumes "YYYY-mm-dd" is the input date format.
+    :param target_date:
+    :return:
+    """
+
+    dt = datetime.strptime(target_date, "%Y-%m-%d")
+    timestamp = dt.replace(tzinfo=timezone.utc).timestamp() * 1000
+
+    return timestamp
 
 
 def _init_api(args_dict, config_dict):

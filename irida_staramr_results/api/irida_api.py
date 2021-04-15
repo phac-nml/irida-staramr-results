@@ -389,7 +389,6 @@ class IridaAPI(object):
             "staramr-summary.tsv",
             "staramr-plasmidfinder.tsv",
             "staramr-mlst.tsv"
-            "staramr-pointfinder.tsv"
         ]
 
         result_files = []
