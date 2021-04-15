@@ -25,6 +25,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
 
     if len(amr_completed_analysis_submissions) < 1:
         logging.warning(f"No completed amr analysis submission type for project id [{project_id}].")
+        return
 
     global _directory_name
     _directory_name = "staramr-results-" + datetime.now().strftime("%Y-%m-%dT-%H-%M-%S")
