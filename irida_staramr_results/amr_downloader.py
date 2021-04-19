@@ -28,7 +28,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
         return
 
     global _directory_name
-    _directory_name = "staramr-results-" + datetime.now().strftime("%Y-%m-%dT-%H-%M-%S")
+    _directory_name = "staramr-results-" + datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     logging.info(f"Creating directory name {_directory_name} to store results files.")
     os.mkdir(_directory_name)
 
@@ -71,8 +71,10 @@ def _get_output_file_name(prefix_name, timestamp):
 
     # if filename already exists, add an increment number
     increment = 1
-    while os.path.isfile(output_file_name + ".xlsx"):
-        output_file_name = prefix_name + str(increment) + "-" + date_formatted
+    target_path = os.path.join(_directory_name, output_file_name + ".xlsx")
+    while os.path.isfile(target_path):
+        output_file_name = prefix_name + "-" + date_formatted + f" ({increment})"
+        target_path = os.path.join(_directory_name, output_file_name + ".xlsx")
         increment = increment + 1
         logging.info(f"File name already exists, {output_file_name}.xlsx generated.")
 

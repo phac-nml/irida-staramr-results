@@ -46,8 +46,8 @@ def _validate_args(args):
     if args.password is None:
         print("Enter your IRIDA password: ")
         args.password = getpass.getpass()
-    if ".xlsx" in args.output:
-        args.output = args.output.strip(".xlsx")
+    if args.output.endswith(".xlsx"):
+        args.output = args.output[:-len(".xlsx")]
 
     return {'username': args.username,
             'password': args.password,
