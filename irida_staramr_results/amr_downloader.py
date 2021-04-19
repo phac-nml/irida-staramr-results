@@ -73,7 +73,7 @@ def _get_output_file_name(prefix_name, timestamp):
     increment = 1
     target_path = os.path.join(_directory_name, output_file_name + ".xlsx")
     while os.path.isfile(target_path):
-        output_file_name = prefix_name + "-" + date_formatted + f" ({increment})"
+        output_file_name = f"{prefix_name}-{date_formatted} ({increment})"
         target_path = os.path.join(_directory_name, output_file_name + ".xlsx")
         increment = increment + 1
         logging.info(f"File name already exists, {output_file_name}.xlsx generated.")
