@@ -2,6 +2,7 @@ import argparse
 import getpass
 import logging
 import sys
+import time
 from datetime import datetime, timezone
 
 from irida_staramr_results.version import __version__
@@ -30,8 +31,11 @@ def init_argparser():
                                  help="Required. Path to a configuration file. ")
     argument_parser.add_argument("-a", "--append", action="store_true",
                                  help="Append all analysis results to a single output file.")
-    argument_parser.add_argument("-d", "--date", action="store",
-                                 help="Download only results of the analysis that were created since this date.")
+    argument_parser.add_argument("--fromDate", action="store",
+                                 help="Download only results of the analysis that were created FROM this date.")
+    argument_parser.add_argument("--toDate", action="store",
+                                 help="Download only results of the analysis that were created UP UNTIL this date.")
+
 
     return argument_parser
 
@@ -52,10 +56,8 @@ def _validate_args(args):
         args.password = getpass.getpass()
     if args.output.endswith(".xlsx"):
         args.output = args.output[:-len(".xlsx")]
-    if args.date is None:
-        args.date = 0
-    else:
-        args.date = utc_to_timestamp(args.date)
+
+    date = _validate_date(args.fromDate, args.toDate)
 
     return {'username': args.username,
             'password': args.password,
@@ -63,7 +65,38 @@ def _validate_args(args):
             'project': args.project,
             'output': args.output,
             'append': args.append,
-            'date': args.date}
+            'fromDate': date["fromDate"],
+            'toDate': date["toDate"]}
+
+
+def _validate_date(from_date, to_date):
+    """
+    Sets up FROM and TO date values in unix timestamp.
+    :param from_date:
+    :param to_date:
+    :return:
+    """
+
+    if from_date is None:
+        from_date = 0
+    else:
+        from_date = utc_to_timestamp(from_date)
+
+    if to_date is None:
+        to_date = time.time() * 1000
+    else:
+        to_date = utc_to_timestamp(to_date)
+
+    if (to_date > time.time() * 1000) or (from_date > time.time() * 1000):
+        logging.error("DateError: --fromDate and --toDate cannot be in the future.")
+        sys.exit(1)
+
+    if from_date > to_date:
+        logging.error("DateError: --fromDate must be earlier than --toDate.")
+        sys.exit(1)
+
+
+    return {"fromDate": from_date, "toDate": to_date}
 
 
 def utc_to_timestamp(target_date):
@@ -125,7 +158,7 @@ def main():
 
     # Start downloading results
     amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["append"],
-                                        args_dict["date"])
+                                        args_dict["fromDate"], args_dict["toDate"])
 
 
 # This is called when the program is run for the first time

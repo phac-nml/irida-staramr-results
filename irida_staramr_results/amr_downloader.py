@@ -8,14 +8,15 @@ import pandas as pd
 _directory_name = ""
 
 
-def download_all_results(irida_api, project_id, output_file_name, mode_append, target_timestamp):
+def download_all_results(irida_api, project_id, output_file_name, mode_append, from_timestamp, to_timestamp):
     """
     Main function for downloading StarAMR results to an excel file.
     :param irida_api:
     :param project_id:
     :param output_file_name:
     :param mode_append: boolean, appends all file data together when True
-    :param target_timestamp:
+    :param from_timestamp:
+    :param to_timestamp:
     :return:
     """
 
@@ -35,8 +36,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, t
 
 
     # Filter analysis created since target date (in timestamp)
-    amr_completed_analysis_submissions = [a for a in amr_completed_analysis_submissions
-                                          if a["createdDate"] >= target_timestamp]
+    amr_completed_analysis_submissions = _filter_by_date(amr_completed_analysis_submissions, from_timestamp, to_timestamp)
 
     if mode_append:
         # In append mode, collect all the data into dataframes, one per unique file name, then write a single file.
@@ -58,6 +58,25 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, t
             _data_frames_to_excel(data_frames, out_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
+
+
+def _filter_by_date(analysis, from_timestamp, to_timestamp):
+    """
+    Filters list of analysis objects with attribute "createdDate".
+    Returns a new list of analyses objects that were created between from_timestamp and to_timestamp
+    :param analysis:
+    :param from_timestamp: unix timestamp (float)
+    :param to_timestamp: unix timestamp (float)
+    :return:
+    """
+
+    analysis_filtered = []
+
+    for a in analysis:
+        if from_timestamp <= a["createdDate"] <= to_timestamp:
+            analysis_filtered.append(a)
+
+    return analysis_filtered
 
 
 def _get_output_file_name(prefix_name, timestamp):
