@@ -80,12 +80,12 @@ def _validate_date(from_date, to_date):
     if from_date is None:
         from_date = 0
     else:
-        from_date = utc_to_timestamp(from_date)
+        from_date = local_time_to_unix_timestamp(from_date)
 
     if to_date is None:
         to_date = time.time() * 1000
     else:
-        to_date = utc_to_timestamp(to_date)
+        to_date = local_time_to_unix_timestamp(to_date)
 
     if (to_date > time.time() * 1000) or (from_date > time.time() * 1000):
         logging.error("DateError: --fromDate and --toDate cannot be in the future.")
@@ -99,15 +99,16 @@ def _validate_date(from_date, to_date):
     return {"fromDate": from_date, "toDate": to_date}
 
 
-def utc_to_timestamp(target_date):
+def local_time_to_unix_timestamp(target_date):
     """
-    Converts date in UTC to unix timestamp in milliseconds. Assumes "YYYY-mm-dd" is the input date format.
-    :param target_date:
+    Converts date in local time to unix timestamp in milliseconds. Assumes "YYYY-mm-dd" is the input date format.
+    :param target_date: string type formatted as YYYY-mm-dd
     :return:
     """
 
-    dt = datetime.strptime(target_date, "%Y-%m-%d")
-    timestamp = dt.replace(tzinfo=timezone.utc).timestamp() * 1000
+    dt = datetime.strptime(target_date, "%Y-%m-%d")  # local
+    dt_utc = dt.replace(tzinfo=timezone.utc)  # local -> utc
+    timestamp = dt_utc.timestamp() * 1000  # utc -> unix timestamp (millisecond)
 
     return timestamp
 
