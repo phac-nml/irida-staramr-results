@@ -95,6 +95,9 @@ def _validate_date(from_date, to_date):
         logging.error("DateError: --fromDate must be earlier than --toDate.")
         sys.exit(1)
 
+    # Add 24 hours (86400000 milliseconds) to include to_date's full day.
+    to_date = to_date + 86400000
+
 
     return {"fromDate": from_date, "toDate": to_date}
 
