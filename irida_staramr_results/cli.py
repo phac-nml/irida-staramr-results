@@ -45,7 +45,7 @@ def _validate_args(args):
     Validates argument input by the users and returns a dictionary of required information from arguments.
         - If user does not include username and password in arguments, the program prompts the user to enter it.
         - If user specify ".xlsx" for the output name, this method removes it.
-        - Converts date (in UTC) to unix timestamp. If not specified, it will be set to 0
+        - Validates date arguments (from and to)
     :param args:
     :return dictionary:
     """

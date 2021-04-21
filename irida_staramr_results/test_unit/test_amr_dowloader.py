@@ -27,6 +27,10 @@ class AmrDownloader(unittest.TestCase):
         self.assertEqual(res_milli, "out-2021-01-19T21-13-14")
 
     def test_filter_by_date(self):
+        """
+        Tests function that filters analysis by date range
+        :return:
+        """
         fake_list = [
             {"createdDate": 1611122400000},  # Jan 20 2021
             {"createdDate": 1613282400000},  # Feb 14 2021

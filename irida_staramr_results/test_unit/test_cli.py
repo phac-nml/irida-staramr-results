@@ -6,6 +6,10 @@ from irida_staramr_results import cli
 class TestCli(unittest.TestCase):
 
     def test_validate_date(self):
+        """
+        Test _validate_date function to return as expected
+        :return:
+        """
 
         fake_from = "2021-04-08"  # in local timezone
         fake_to = "2021-04-09"  # in local timezone
@@ -38,16 +42,6 @@ class TestCli(unittest.TestCase):
         with self.assertRaises(ValueError) as c:
             cli.local_to_timestamp(fake_bad_date)
             self.assertTrue("does not match format '%Y-%m-%d'" in c.exception)
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
