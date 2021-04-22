@@ -21,7 +21,9 @@ class TestCli(unittest.TestCase):
         self.assertLess(res["fromDate"], res["toDate"])
 
         self.assertEqual(res["fromDate"], 1617840000000.0)
-        self.assertEqual(res["toDate"], 1617926400000.0)
+
+        # the actual date plus one day
+        self.assertEqual(res["toDate"], 1617926400000.0 + 86400000)
 
         fake_from = None
         fake_to = None
