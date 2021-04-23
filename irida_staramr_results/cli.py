@@ -31,9 +31,9 @@ def init_argparser():
                                  help="Required. Path to a configuration file. ")
     argument_parser.add_argument("-a", "--append", action="store_true",
                                  help="Append all analysis results to a single output file.")
-    argument_parser.add_argument("--fromDate", action="store",
+    argument_parser.add_argument("-fd", "--from_date", action="store",
                                  help="Download only results of the analysis that were created FROM this date.")
-    argument_parser.add_argument("--toDate", action="store",
+    argument_parser.add_argument("-td", "--to_date", action="store",
                                  help="Download only results of the analysis that were created UP UNTIL this date.")
 
 
@@ -57,7 +57,7 @@ def _validate_args(args):
     if args.output.endswith(".xlsx"):
         args.output = args.output[:-len(".xlsx")]
 
-    date = _validate_date(args.fromDate, args.toDate)
+    date_range = _validate_date(args.from_date, args.to_date)
 
     return {'username': args.username,
             'password': args.password,
@@ -65,8 +65,8 @@ def _validate_args(args):
             'project': args.project,
             'output': args.output,
             'append': args.append,
-            'fromDate': date["fromDate"],
-            'toDate': date["toDate"]}
+            'from_date': date_range["from_date"],
+            'to_date': date_range["to_date"]}
 
 
 def _validate_date(from_date, to_date):
@@ -80,29 +80,29 @@ def _validate_date(from_date, to_date):
     if from_date is None:
         from_date = 0
     else:
-        from_date = local_to_timestamp(from_date)
+        from_date = _local_to_timestamp(from_date)
 
     if to_date is None:
         to_date = time.time() * 1000
     else:
-        to_date = local_to_timestamp(to_date)
+        to_date = _local_to_timestamp(to_date)
 
     if (to_date > time.time() * 1000) or (from_date > time.time() * 1000):
-        logging.error("DateError: --fromDate and --toDate cannot be in the future.")
+        logging.error("DateError: --from_date and --to_date cannot be in the future.")
         sys.exit(1)
 
     if from_date > to_date:
-        logging.error("DateError: --fromDate must be earlier than --toDate.")
+        logging.error("DateError: --from_date must be earlier than --to_date.")
         sys.exit(1)
 
     # Add 24 hours (86400000 milliseconds) to include to_date's full day.
     to_date = to_date + 86400000
 
 
-    return {"fromDate": from_date, "toDate": to_date}
+    return {"from_date": from_date, "to_date": to_date}
 
 
-def local_to_timestamp(target_date):
+def _local_to_timestamp(target_date):
     """
     Converts date in local time to unix timestamp in milliseconds. Assumes "YYYY-mm-dd" is the input date format.
     :param target_date: string type formatted as YYYY-mm-dd
@@ -162,7 +162,7 @@ def main():
 
     # Start downloading results
     amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["append"],
-                                        args_dict["fromDate"], args_dict["toDate"])
+                                        args_dict["from_date"], args_dict["to_date"])
 
 
 # This is called when the program is run for the first time
