@@ -4,3 +4,4 @@ setuptools
 pyyaml
 pandas
 xlsxwriter
+dateutil

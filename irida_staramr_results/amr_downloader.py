@@ -3,6 +3,7 @@ import os
 import logging
 
 from datetime import datetime
+from dateutil import tz
 import pandas as pd
 
 _directory_name = ""
@@ -15,8 +16,8 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, f
     :param project_id:
     :param output_file_name:
     :param mode_append: boolean, appends all file data together when True
-    :param from_timestamp:
-    :param to_timestamp:
+    :param from_timestamp: 00:00:00 of this day
+    :param to_timestamp: 23:59:58 of this day
     :return:
     """
 
@@ -38,6 +39,13 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, f
     # Filter analysis created since target date (in timestamp)
     amr_completed_analysis_submissions = _filter_by_date(amr_completed_analysis_submissions, from_timestamp, to_timestamp)
 
+    if len(amr_completed_analysis_submissions) < 1:
+
+        from_date = _timestamp_to_local(from_timestamp)
+        to_date = _timestamp_to_local(to_timestamp)
+        logging.warning(f"No completed amr analysis submission created from [{from_date}] to [{to_date}]. Exiting..")
+        return
+
     if mode_append:
         # In append mode, collect all the data into dataframes, one per unique file name, then write a single file.
         logging.info(f"Append mode: Writing all results data in one output file...")
@@ -58,6 +66,21 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, f
             _data_frames_to_excel(data_frames, out_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
+
+
+def _timestamp_to_local(timestamp):
+    """
+    Converts unix timestamp in milliseconds to local time.
+    :param timestamp:
+    :return: string type formatted as YYYY-mm-dd
+    """
+    timestamp = timestamp/1000
+    local_tz = tz.tzlocal()
+
+    dt_utc = datetime.utcfromtimestamp(timestamp)
+    dt_local = dt_utc.replace(tzinfo=local_tz)
+    date_str = dt_local.strftime("%Y-%m-%d")
+    return date_str
 
 
 def _filter_by_date(analysis, from_timestamp, to_timestamp):

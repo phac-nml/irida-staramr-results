@@ -109,8 +109,8 @@ def _local_to_timestamp(target_date):
     :return:
     """
 
-    dt = datetime.strptime(target_date, "%Y-%m-%d")  # local
-    dt_utc = dt.replace(tzinfo=timezone.utc)  # local -> utc
+    dt_local = datetime.strptime(target_date, "%Y-%m-%d")  # local
+    dt_utc = dt_local.replace(tzinfo=timezone.utc)  # local -> utc
     timestamp = dt_utc.timestamp() * 1000  # utc -> unix timestamp (millisecond)
 
     return timestamp

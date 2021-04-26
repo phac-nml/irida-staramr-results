@@ -16,20 +16,20 @@ class TestCli(unittest.TestCase):
 
         res = cli._validate_date(fake_from, fake_to)
 
-        self.assertIn("fromDate", res)
-        self.assertIn("toDate", res)
-        self.assertLess(res["fromDate"], res["toDate"])
+        self.assertIn("from_date", res)
+        self.assertIn("to_date", res)
+        self.assertLess(res["from_date"], res["to_date"])
 
-        self.assertEqual(res["fromDate"], 1617840000000.0)
+        self.assertEqual(res["from_date"], 1617840000000.0)
 
         # the actual date plus one day
-        self.assertEqual(res["toDate"], 1617926400000.0 + 86400000)
+        self.assertEqual(res["to_date"], 1617926400000.0 + 86400000)
 
         fake_from = None
         fake_to = None
 
         res = cli._validate_date(fake_from, fake_to)
-        self.assertEqual(0, res["fromDate"])
+        self.assertEqual(0, res["from_date"])
 
     def test_local_to_timestamp(self):
         """
@@ -37,12 +37,12 @@ class TestCli(unittest.TestCase):
         :return:
         """
         fake_good_date = "2021-04-08"  # CDT
-        res = cli.local_to_timestamp(fake_good_date)
+        res = cli._local_to_timestamp(fake_good_date)
         self.assertEqual(res, 1617840000000.0)
 
         fake_bad_date = "2021/04/08"
         with self.assertRaises(ValueError) as c:
-            cli.local_to_timestamp(fake_bad_date)
+            cli._local_to_timestamp(fake_bad_date)
             self.assertTrue("does not match format '%Y-%m-%d'" in c.exception)
 
 
