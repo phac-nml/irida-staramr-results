@@ -50,7 +50,7 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
 - `-td` or `--to_date`: Download only results of the analysis that were created UP UNTIL this date.*
     
 __Notes:__ 
-- \* Dates are formatted as `YYYY-mm-dd` (eg. 2021-04-08) and includes hours from 00:00:00 to 23:59:59 of the inputted date.
+- \* Dates are formatted as `YYYY-mm-dd` (eg. 2021-04-08) and include hours from 00:00:00 to 23:59:59 of the inputted date.
 
 ## Running Tests
 #### Unit test
