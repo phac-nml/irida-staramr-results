@@ -42,7 +42,7 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, f
     if len(amr_completed_analysis_submissions) < 1:
 
         from_date = _timestamp_to_local(from_timestamp)
-        to_date = _timestamp_to_local(to_timestamp)
+        to_date = _timestamp_to_local(to_timestamp - 86400000)
         logging.warning(f"No completed amr analysis submission created from [{from_date}] to [{to_date}]. Exiting..")
         return
 
