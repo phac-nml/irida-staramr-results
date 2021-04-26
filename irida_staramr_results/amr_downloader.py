@@ -1,20 +1,23 @@
 import io
 import os
 import logging
-from datetime import datetime
 
+from datetime import datetime
+from dateutil import tz
 import pandas as pd
 
 _directory_name = ""
 
 
-def download_all_results(irida_api, project_id, output_file_name, mode_append):
+def download_all_results(irida_api, project_id, output_file_name, mode_append, from_timestamp, to_timestamp):
     """
     Main function for downloading StarAMR results to an excel file.
     :param irida_api:
     :param project_id:
     :param output_file_name:
     :param mode_append: boolean, appends all file data together when True
+    :param from_timestamp: 00:00:00 of this day
+    :param to_timestamp: 23:59:58 of this day
     :return:
     """
 
@@ -25,6 +28,16 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
 
     if len(amr_completed_analysis_submissions) < 1:
         logging.warning(f"No completed amr analysis submission type for project id [{project_id}].")
+        return
+
+    # Filter analysis created since target date (in timestamp)
+    amr_completed_analysis_submissions = _filter_by_date(amr_completed_analysis_submissions, from_timestamp, to_timestamp)
+
+    if len(amr_completed_analysis_submissions) < 1:
+
+        from_date = _timestamp_to_local(from_timestamp)
+        to_date = _timestamp_to_local(to_timestamp - 86400000)
+        logging.warning(f"No completed amr analysis submission created from [{from_date}] to [{to_date}]. Exiting..")
         return
 
     global _directory_name
@@ -53,6 +66,40 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append):
             _data_frames_to_excel(data_frames, out_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
+
+
+def _timestamp_to_local(timestamp):
+    """
+    Converts unix timestamp in milliseconds to local time.
+    :param timestamp:
+    :return: string type formatted as YYYY-mm-dd
+    """
+    timestamp = timestamp/1000
+    local_tz = tz.tzlocal()
+
+    dt_utc = datetime.utcfromtimestamp(timestamp)
+    dt_local = dt_utc.replace(tzinfo=local_tz)
+    date_str = dt_local.strftime("%Y-%m-%d")
+    return date_str
+
+
+def _filter_by_date(analysis, from_timestamp, to_timestamp):
+    """
+    Filters list of analysis objects with attribute "createdDate".
+    Returns a new list of analyses objects that were created between from_timestamp and to_timestamp
+    :param analysis:
+    :param from_timestamp: unix timestamp (float)
+    :param to_timestamp: unix timestamp (float)
+    :return:
+    """
+
+    analysis_filtered = []
+
+    for a in analysis:
+        if from_timestamp <= a["createdDate"] <= to_timestamp:
+            analysis_filtered.append(a)
+
+    return analysis_filtered
 
 
 def _get_output_file_name(prefix_name, timestamp):

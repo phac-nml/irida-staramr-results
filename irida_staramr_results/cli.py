@@ -2,6 +2,8 @@ import argparse
 import getpass
 import logging
 import sys
+import time
+from datetime import datetime, timezone
 
 from irida_staramr_results.version import __version__
 from irida_staramr_results import amr_downloader, api, parsers
@@ -25,10 +27,15 @@ def init_argparser():
                                  help="This is your IRIDA account username.")
     argument_parser.add_argument("-pw", "--password", action="store",
                                  help="This is your IRIDA account password.")
-    argument_parser.add_argument("-c", "--config", action='store', required=True,
-                                 help='Required. Path to a configuration file. ')
-    argument_parser.add_argument("-a", "--append", action='store_true',
+    argument_parser.add_argument("-c", "--config", action="store", required=True,
+                                 help="Required. Path to a configuration file. ")
+    argument_parser.add_argument("-a", "--append", action="store_true",
                                  help="Append all analysis results to a single output file.")
+    argument_parser.add_argument("-fd", "--from_date", action="store",
+                                 help="Download only results of the analysis that were created FROM this date.")
+    argument_parser.add_argument("-td", "--to_date", action="store",
+                                 help="Download only results of the analysis that were created UP UNTIL this date.")
+
 
     return argument_parser
 
@@ -36,8 +43,9 @@ def init_argparser():
 def _validate_args(args):
     """
     Validates argument input by the users and returns a dictionary of required information from arguments.
-    If user does not include username and password in arguments,
-    the program prompts the user to enter it.
+        - If user does not include username and password in arguments, the program prompts the user to enter it.
+        - If user specify ".xlsx" for the output name, this method removes it.
+        - Validates date arguments (from and to)
     :param args:
     :return dictionary:
     """
@@ -49,12 +57,63 @@ def _validate_args(args):
     if args.output.endswith(".xlsx"):
         args.output = args.output[:-len(".xlsx")]
 
+    date_range = _validate_date(args.from_date, args.to_date)
+
     return {'username': args.username,
             'password': args.password,
             'config': args.config,
             'project': args.project,
             'output': args.output,
-            'append': args.append}
+            'append': args.append,
+            'from_date': date_range["from_date"],
+            'to_date': date_range["to_date"]}
+
+
+def _validate_date(from_date, to_date):
+    """
+    Sets up FROM and TO date values in unix timestamp.
+    :param from_date:
+    :param to_date:
+    :return:
+    """
+
+    if from_date is None:
+        from_date = 0
+    else:
+        from_date = _local_to_timestamp(from_date)
+
+    if to_date is None:
+        to_date = time.time() * 1000
+    else:
+        to_date = _local_to_timestamp(to_date)
+
+    if (to_date > time.time() * 1000) or (from_date > time.time() * 1000):
+        logging.error("DateError: --from_date and --to_date cannot be in the future.")
+        sys.exit(1)
+
+    if from_date > to_date:
+        logging.error("DateError: --from_date must be earlier than --to_date.")
+        sys.exit(1)
+
+    # Add 24 hours (86400000 milliseconds) to include to_date's full day.
+    to_date = to_date + 86400000
+
+
+    return {"from_date": from_date, "to_date": to_date}
+
+
+def _local_to_timestamp(target_date):
+    """
+    Converts date in local time to unix timestamp in milliseconds. Assumes "YYYY-mm-dd" is the input date format.
+    :param target_date: string type formatted as YYYY-mm-dd
+    :return:
+    """
+
+    dt_local = datetime.strptime(target_date, "%Y-%m-%d")  # local
+    dt_utc = dt_local.replace(tzinfo=timezone.utc)  # local -> utc
+    timestamp = dt_utc.timestamp() * 1000  # utc -> unix timestamp (millisecond)
+
+    return timestamp
 
 
 def _init_api(args_dict, config_dict):
@@ -102,7 +161,8 @@ def main():
     logging.info("Successfully connected to IRIDA API.")
 
     # Start downloading results
-    amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["append"])
+    amr_downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["append"],
+                                        args_dict["from_date"], args_dict["to_date"])
 
 
 # This is called when the program is run for the first time

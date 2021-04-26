@@ -30,10 +30,29 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
 
 4. __Execute the program:__
     ```
-    > irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME>.xlsx
+    > irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME>.xlsx -fd 2021-04-08 -td 2021-04-21
     ```
 
-### Running Tests
+## Arguments
+
+#### Required:
+- `-u` or `--username`: This is your IRIDA account username.
+- `-pw` or `--password`: This is your IRIDA account password.
+- `-p` or `--project`: Project(s) to scan for StarAMR results.
+- `-o` or `--output`: The name of the output excel file.
+- `-c` or `--config`: Required. Path to a configuration file.
+
+#### Optional:
+- `-h` or `--help`: Show help message.
+- `-v` or `--version`: The current version of irida-staramr-results.
+- `-a` or `--append`: Append all analysis results to a single output file.
+- `-fd` or `--from_date`: Download only results of the analysis that were created FROM this date.*
+- `-td` or `--to_date`: Download only results of the analysis that were created UP UNTIL this date.*
+    
+__Notes:__ 
+- \* Dates are formatted as `YYYY-mm-dd` (eg. 2021-04-08) and include hours from 00:00:00 to 23:59:59 of the inputted date.
+
+## Running Tests
 #### Unit test
 1. Running the unit tests can be done with the command:
     ```
