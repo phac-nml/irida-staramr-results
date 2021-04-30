@@ -4,16 +4,24 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
 
 ## Running from source code
 
+### Python
+IRIDA StarAMR Results requires Python version 3.8 or later. Check the Python version you are using with:
+```
+$ python --version
+```
+
+The following instructions describe how to install and execute IRIDA StarAMR Results from GitHub.
+
 1. __Clone the repository:__
    ```
-   > git clone https://github.com/phac-nml/irida-staramr-results.git
+   $ git clone https://github.com/phac-nml/irida-staramr-results.git
    ```
 
 2. __Install and build the Project__
    ```
-   > cd irida-staramr-results
-   > make
-   > source .virtualenv/bin/activate
+   $ cd irida-staramr-results
+   $ make
+   $ source .virtualenv/bin/activate
    ```
   
 
@@ -30,24 +38,30 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
 
 4. __Execute the program:__
     ```
-    > irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME>.xlsx -fd 2021-04-08 -td 2021-04-21
+    $ irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME> -fd <FROM_DATE> -td <TO_DATE>
     ```
 
 ## Arguments
 
 #### Required:
-- `-u` or `--username`: This is your IRIDA account username.
-- `-pw` or `--password`: This is your IRIDA account password.
-- `-p` or `--project`: Project(s) to scan for StarAMR results.
-- `-o` or `--output`: The name of the output excel file.
-- `-c` or `--config`: Required. Path to a configuration file.
+
+| Name | Shortcut | Type | Example | Description |
+|------|----------|------|---------|-------------|
+|`--username`|`-u`| `string` | admin |This is your IRIDA account username.|
+|`--password`|`-pw`| `string` | password1 |This is your IRIDA account password.|
+|`--project`|`-p`| `int` | 1 |Project(s) to scan for StarAMR results.|
+|`--output`|`-o`| `string` | out |The name of the output excel file.|
+|`--config`|`-c`| `string` | /path/to/config/file/conf.yml |Path to a configuration file.|
 
 #### Optional:
-- `-h` or `--help`: Show help message.
-- `-v` or `--version`: The current version of irida-staramr-results.
-- `-a` or `--append`: Append all analysis results to a single output file.
-- `-fd` or `--from_date`: Download only results of the analysis that were created FROM this date.*
-- `-td` or `--to_date`: Download only results of the analysis that were created UP UNTIL this date.*
+
+| Name | Shortcut | Type | Example | Description |
+|------|----------|------|---------|-------------|
+|`--help`|`-h`|N/A|N/A|Show help message.|
+|`--version`|`-v`|N/A|N/A|The current version of irida-staramr-results.|
+|`--separate_all`|`-sa`|N/A|N/A|Export each analysis results into separate output files resulting to one `.xlsx` file per analysis.|
+|`--from_date`|`-fd`|`string`|2021-01-03|Download only results of the analysis that were created **from** this date.*|
+|`--to_date`|`-td`|`string`|2021-04-01|Download only results of the analysis that were created **to** this date.*|
     
 __Notes:__ 
 - \* Dates are formatted as `YYYY-mm-dd` (eg. 2021-04-08) and include hours from 00:00:00 to 23:59:59 of the inputted date.
@@ -56,7 +70,7 @@ __Notes:__
 #### Unit test
 1. Running the unit tests can be done with the command:
     ```
-    > make unittests
+    $ make unittests
     ```
 
 

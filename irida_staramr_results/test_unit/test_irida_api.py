@@ -5,9 +5,9 @@ from irida_staramr_results.api.irida_api import IridaAPI
 from irida_staramr_results.api import exceptions
 
 
-class IridaApiTest(unittest.TestCase):
+class TestIridaApi(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         print("\nStarting " + self.__module__ + ": " + self._testMethodName)
 
     def tearDown(self):
@@ -22,7 +22,6 @@ class IridaApiTest(unittest.TestCase):
         :param mock_is_result_type_amr:
         :return:
         """
-
 
         fake_data_completed = {"analysisState": "COMPLETED", "identifier": 1}
         fake_data_error = {"analysisState": "ERROR", "identifier": 1}
@@ -45,6 +44,7 @@ class IridaApiTest(unittest.TestCase):
         Test _is_results_type_amr return values
         :return:
         """
+
         fake_amr_type = {"analysisType": {"type": "AMR_DETECTION"}}
         fake_none_amr_type = {"analysisType": {"type": "NOT_AMR"}}
 
@@ -63,6 +63,7 @@ class IridaApiTest(unittest.TestCase):
         :param mock_get_analysis_submissions:
         :return:
         """
+
         def _is_submission_type_stub(args):
             return args
 
@@ -73,19 +74,19 @@ class IridaApiTest(unittest.TestCase):
         # Test [True, True, True] to return 3 values
         mock_get_analysis_submissions.return_value = fake_data_all_true
         mock_is_submission_type_amr.side_effect = _is_submission_type_stub
-        res = IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
+        res = IridaAPI.get_completed_amr_analysis_submissions(IridaAPI, 1)
         self.assertEqual(len(res), 3)
 
         # Test [False, False, False] to return 0 values
         mock_get_analysis_submissions.return_value = fake_data_all_false
         mock_is_submission_type_amr.side_effect = _is_submission_type_stub
-        res = IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
+        res = IridaAPI.get_completed_amr_analysis_submissions(IridaAPI, 1)
         self.assertEqual(len(res), 0)
 
         # Test [False, False, True, False] to return 1 value
         mock_get_analysis_submissions.return_value = fake_data_some_true
         mock_is_submission_type_amr.side_effect = _is_submission_type_stub
-        res = IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
+        res = IridaAPI.get_completed_amr_analysis_submissions(IridaAPI, 1)
         self.assertEqual(len(res), 1)
 
     @patch("irida_staramr_results.api.irida_api.IridaAPI._get_analysis_submissions")
@@ -99,7 +100,7 @@ class IridaApiTest(unittest.TestCase):
         mock_get_analysis_submissions.side_effect = KeyError
 
         with self.assertRaises(exceptions.IridaResourceError):
-            IridaAPI.get_amr_analysis_submissions(IridaAPI, 1)
+            IridaAPI.get_completed_amr_analysis_submissions(IridaAPI, 1)
 
 
 if __name__ == '__main__':
