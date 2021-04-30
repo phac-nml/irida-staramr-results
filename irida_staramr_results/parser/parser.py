@@ -1,7 +1,7 @@
 import yaml
 import logging
 
-from irida_staramr_results import parsers
+from irida_staramr_results import parser
 
 
 def parse_config(config_file_path):
@@ -16,7 +16,7 @@ def parse_config(config_file_path):
             config_info = yaml.load(file, Loader=yaml.FullLoader)
     except FileNotFoundError:
         logging.error(f"No configuration file found in {config_file_path}.")
-        raise parsers.exceptions.ConfigFileNotFoundError()
+        raise parser.exceptions.ConfigFileNotFoundError()
 
     try:
         config_dict = {"base_url": config_info["base-url"],
@@ -25,6 +25,6 @@ def parse_config(config_file_path):
     except KeyError as key:
         logging.error(f"No key {key} exists in config file."
                       f"Ensure your client information in the configuration file is correct.")
-        raise parsers.exceptions.ConfigInformationError()
+        raise parser.exceptions.ConfigInformationError()
 
     return config_dict

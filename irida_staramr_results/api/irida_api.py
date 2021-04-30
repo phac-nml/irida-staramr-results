@@ -10,7 +10,8 @@ from requests.adapters import HTTPAdapter
 from rauth import OAuth2Service
 
 from irida_staramr_results.api import exceptions
-from irida_staramr_results.amr_output import AmrOutput
+from irida_staramr_results.model.result import Result
+
 
 # For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
 # can subscribe to. That way, the api module is separate, and other applications could use the emits/messages in their
@@ -298,7 +299,7 @@ class IridaAPI(object):
 
         return False
 
-    def get_amr_analysis_submissions(self, project_id):
+    def get_completed_amr_analysis_submissions(self, project_id):
         """
         Get COMPLETED (not error) analysis submissions of AMR DETECTION type from a project id.
         If no analysis results found in the project, it returns an empty array.
@@ -381,14 +382,15 @@ class IridaAPI(object):
         :param analysis_submission_id:
         :return amr_analysis_submissions:
         """
-        # TODO: store this list in a config file
+
         file_list = [
             "staramr-resfinder.tsv",
             "staramr-detailed-summary.tsv",
             "staramr-settings.txt",
             "staramr-summary.tsv",
             "staramr-plasmidfinder.tsv",
-            "staramr-mlst.tsv"
+            "staramr-mlst.tsv",
+            "staramr-pointfinder.tsv"
         ]
 
         result_files = []
@@ -398,14 +400,20 @@ class IridaAPI(object):
             try:
                 file_url = self._get_file_url(analysis_submission_id, file_key)
             except exceptions.IridaKeyError:
-                """
-                Catches an exception if an analysis submission does not contain an analysis result.
-                For our case, this shouldn't happen since we use completed amr type analysis submission given 
-                by the caller (amr_downloader).
-                """
-                logging.error(f"No analysis result exists for analysis submission id "
-                             f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
-                             f"and ensure the analysis status is COMPLETED.")
+
+                if file_key == "staramr-pointfinder.tsv":
+                    logging.debug("No staramr-pointfinder.tsv found as one of the output files, skipping...")
+                    continue
+                else:
+                    """
+                    Catches an exception if an analysis submission does not contain an analysis result.
+                    For our case, this shouldn't happen since we use completed amr type analysis submission given 
+                    by the caller (amr_downloader).
+                    """
+                    logging.error(f"No analysis result exists for analysis submission id "
+                                  f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
+                                  f"and ensure the analysis status is COMPLETED.")
+
             # response containing json
             response_json = self._session.get(file_url)
 
@@ -413,9 +421,9 @@ class IridaAPI(object):
             response_txt = self._session.get(file_url, headers={"Accept": "text/plain"})
 
             # create output object
-            output = AmrOutput( file_json=response_json.json()["resource"],
-                                file_txt=response_txt.content,
-                                file_key=file_key)
+            output = Result(file_json=response_json.json()["resource"],
+                            file_txt=response_txt.content,
+                            file_key=file_key)
             result_files.append(output)
 
         return result_files
@@ -432,6 +440,7 @@ class IridaAPI(object):
             "key": "identifier",
             "value": analysis_submission_id
         })
+
 
         file_url = self._get_link(analysis_result_url, "outputFile/" + file_key)
         return file_url

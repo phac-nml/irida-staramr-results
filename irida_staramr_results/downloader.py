@@ -3,19 +3,20 @@ import os
 import logging
 
 from datetime import datetime
-from dateutil import tz
 import pandas as pd
+
+from irida_staramr_results import filter, util
 
 _directory_name = ""
 
 
-def download_all_results(irida_api, project_id, output_file_name, mode_append, from_timestamp, to_timestamp):
+def download_all_results(irida_api, project_id, output_file_name, separate_mode, from_timestamp, to_timestamp):
     """
     Main function for downloading StarAMR results to an excel file.
     :param irida_api:
     :param project_id:
     :param output_file_name:
-    :param mode_append: boolean, appends all file data together when True
+    :param separate_mode: boolean, export file data separately if True
     :param from_timestamp: 00:00:00 of this day
     :param to_timestamp: 23:59:58 of this day
     :return:
@@ -24,19 +25,19 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, f
     logging.info(f"Requesting completed amr analysis submissions for project id [{project_id}]. "
                  f"This may take a while...")
 
-    amr_completed_analysis_submissions = irida_api.get_amr_analysis_submissions(project_id)
+    amr_completed_analysis_submissions = irida_api.get_completed_amr_analysis_submissions(project_id)
 
     if len(amr_completed_analysis_submissions) < 1:
         logging.warning(f"No completed amr analysis submission type for project id [{project_id}].")
         return
 
     # Filter analysis created since target date (in timestamp)
-    amr_completed_analysis_submissions = _filter_by_date(amr_completed_analysis_submissions, from_timestamp, to_timestamp)
+    amr_completed_analysis_submissions = filter.by_date_range(amr_completed_analysis_submissions, from_timestamp, to_timestamp)
 
     if len(amr_completed_analysis_submissions) < 1:
 
-        from_date = _timestamp_to_local(from_timestamp)
-        to_date = _timestamp_to_local(to_timestamp - 86400000)
+        from_date = util.timestamp_to_local(from_timestamp)
+        to_date = util.timestamp_to_local(to_timestamp - 86400000)
         logging.warning(f"No completed amr analysis submission created from [{from_date}] to [{to_date}]. Exiting..")
         return
 
@@ -46,60 +47,30 @@ def download_all_results(irida_api, project_id, output_file_name, mode_append, f
     os.mkdir(_directory_name)
 
 
-    if mode_append:
-        # In append mode, collect all the data into dataframes, one per unique file name, then write a single file.
-        logging.info(f"Append mode: Writing all results data in one output file...")
+    # Filter analysis created since target date (in timestamp)
+    amr_completed_analysis_submissions = filter.by_date_range(amr_completed_analysis_submissions,
+                                                              from_timestamp, to_timestamp)
+
+    if separate_mode:
+        # Write the collection of files into a file, one file per analysis
+        logging.info(f"Writing each results data per analysis in their separate output file...")
+        for a in amr_completed_analysis_submissions:
+            results_files = irida_api.get_analysis_result_files(a["identifier"])
+            data_frames = _files_to_data_frames(results_files)
+            logging.info(f"Creating a file for analysis [{a['name']}]. ")
+            out_name = _get_output_file_name(output_file_name, a["createdDate"])
+            _data_frames_to_excel(data_frames, out_name)
+    else:
+        # Base case, collect all the data into dataframes, one per unique file name, then write a single file.
+        logging.info(f"Appending all results data in one output file.")
         data_frames = {}
         for a in amr_completed_analysis_submissions:
             logging.info(f"Appending analysis [{a['name']}]. ")
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _append_file_data_to_existing_data_frames(result_files, data_frames)
         _data_frames_to_excel(data_frames, output_file_name)
-    else:
-        # Base case, write the collection of files into a file, one file per analysis
-        logging.info(f"Non-append mode: Writing each results data per analysis in their separate output file...")
-        for a in amr_completed_analysis_submissions:
-            result_files = irida_api.get_analysis_result_files(a["identifier"])
-            data_frames = _files_to_data_frames(result_files)
-            logging.info(f"Creating a file for analysis [{a['name']}]. ")
-            out_name = _get_output_file_name(output_file_name, a["createdDate"])
-            _data_frames_to_excel(data_frames, out_name)
 
     logging.info(f"Download complete for project id [{project_id}].")
-
-
-def _timestamp_to_local(timestamp):
-    """
-    Converts unix timestamp in milliseconds to local time.
-    :param timestamp:
-    :return: string type formatted as YYYY-mm-dd
-    """
-    timestamp = timestamp/1000
-    local_tz = tz.tzlocal()
-
-    dt_utc = datetime.utcfromtimestamp(timestamp)
-    dt_local = dt_utc.replace(tzinfo=local_tz)
-    date_str = dt_local.strftime("%Y-%m-%d")
-    return date_str
-
-
-def _filter_by_date(analysis, from_timestamp, to_timestamp):
-    """
-    Filters list of analysis objects with attribute "createdDate".
-    Returns a new list of analyses objects that were created between from_timestamp and to_timestamp
-    :param analysis:
-    :param from_timestamp: unix timestamp (float)
-    :param to_timestamp: unix timestamp (float)
-    :return:
-    """
-
-    analysis_filtered = []
-
-    for a in analysis:
-        if from_timestamp <= a["createdDate"] <= to_timestamp:
-            analysis_filtered.append(a)
-
-    return analysis_filtered
 
 
 def _get_output_file_name(prefix_name, timestamp):
@@ -144,7 +115,37 @@ def _data_frames_to_excel(data_frames, output_file_name):
         # append data frame to file
         for file_sheet_name in data_frames:
             logging.debug(f"Writing {file_sheet_name} data to {output_file_name}.xlsx.")
-            data_frames[file_sheet_name].to_excel(writer, sheet_name=file_sheet_name, index=False)
+            df = data_frames[file_sheet_name]
+            df.to_excel(writer, sheet_name=file_sheet_name, index=False)
+
+        # auto-fit column width
+        for file_sheet_name in data_frames:
+            _auto_fit_column_width(writer, data_frames[file_sheet_name], file_sheet_name)
+
+
+def _auto_fit_column_width(writer, data_frame, sheet_name, max_width=75):
+    """
+    Auto adjust column width to fit content, with max width, in a excel file.
+    :param writer:
+    :param data_frame:
+    :param sheet_name:
+    :param max_width:
+    :return:
+    """
+    worksheet = writer.sheets[sheet_name]
+    for index, col in enumerate(data_frame):  # loop through all columns
+        series = data_frame[col]
+
+        # get maximum width of cells in that column plus extra space
+        width = max((
+            series.astype(str).map(len).max(),
+            len(str(series.name))
+        )) + 1
+
+        if width > max_width:
+            width = max_width
+
+        worksheet.set_column(index, index, width)
 
 
 def _files_to_data_frames(results_files):
@@ -192,8 +193,7 @@ def _convert_to_df(file_content):
     :return data_frame:
     """
     if type(file_content) is dict:
-        data = list(file_content.items())
-        data_frame = pd.DataFrame(data, columns=["Key", "Value"])
+        data_frame = pd.DataFrame([file_content])
     else:
         data_frame = pd.read_csv(io.StringIO(file_content), delimiter="\t")
 

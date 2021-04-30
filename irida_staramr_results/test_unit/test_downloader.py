@@ -1,7 +1,7 @@
 import unittest
 import time
 
-from irida_staramr_results.amr_downloader import _get_output_file_name, _filter_by_date
+from irida_staramr_results.downloader import _get_output_file_name, _filter_by_date
 
 
 class AmrDownloader(unittest.TestCase):

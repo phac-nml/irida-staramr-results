@@ -5,10 +5,12 @@ SHEET_NAMES = {
     "staramr-settings.txt": "Settings",
     "staramr-summary.tsv": "Summary",
     "staramr-plasmidfinder.tsv": "PlasmidFinder",
-    "staramr-mlst.tsv": "MLST_Summary"
+    "staramr-mlst.tsv": "MLST_Summary",
+    "staramr-pointfinder.tsv": "PointFinder"
 }
 
-class AmrOutput(object):
+
+class Result(object):
 
     def __init__(self, file_json, file_txt, file_key):
         self.file_info = file_json

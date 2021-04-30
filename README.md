@@ -4,16 +4,24 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
 
 ## Running from source code
 
+### Python
+IRIDA StarAMR Results requires Python version 3.8 or later. Check the Python version you are using with:
+```
+$ python --version
+```
+
+The following instructions describe how to install and execute Irida StarAMR Results from GitHub.
+
 1. __Clone the repository:__
    ```
-   > git clone https://github.com/phac-nml/irida-staramr-results.git
+   $ git clone https://github.com/phac-nml/irida-staramr-results.git
    ```
 
 2. __Install and build the Project__
    ```
-   > cd irida-staramr-results
-   > make
-   > source .virtualenv/bin/activate
+   $ cd irida-staramr-results
+   $ make
+   $ source .virtualenv/bin/activate
    ```
   
 
@@ -30,7 +38,7 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
 
 4. __Execute the program:__
     ```
-    > irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME>.xlsx -fd 2021-04-08 -td 2021-04-21
+    $ irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME>.xlsx -fd 2021-04-08 -td 2021-04-21
     ```
 
 ## Arguments
@@ -45,7 +53,7 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
 #### Optional:
 - `-h` or `--help`: Show help message.
 - `-v` or `--version`: The current version of irida-staramr-results.
-- `-a` or `--append`: Append all analysis results to a single output file.
+- `-sa` or `--separate_all`: Export each analysis results into separate output files resulting to one `.xlsx` file per analysis.
 - `-fd` or `--from_date`: Download only results of the analysis that were created FROM this date.*
 - `-td` or `--to_date`: Download only results of the analysis that were created UP UNTIL this date.*
     
@@ -56,7 +64,7 @@ __Notes:__
 #### Unit test
 1. Running the unit tests can be done with the command:
     ```
-    > make unittests
+    $ make unittests
     ```
 
 
