@@ -10,7 +10,7 @@ IRIDA StarAMR Results requires Python version 3.8 or later. Check the Python ver
 $ python --version
 ```
 
-The following instructions describe how to install and execute Irida StarAMR Results from GitHub.
+The following instructions describe how to install and execute IRIDA StarAMR Results from GitHub.
 
 1. __Clone the repository:__
    ```
@@ -44,18 +44,24 @@ The following instructions describe how to install and execute Irida StarAMR Res
 ## Arguments
 
 #### Required:
-- `-u` or `--username`: This is your IRIDA account username.
-- `-pw` or `--password`: This is your IRIDA account password.
-- `-p` or `--project`: Project(s) to scan for StarAMR results.
-- `-o` or `--output`: The name of the output excel file.
-- `-c` or `--config`: Required. Path to a configuration file.
+
+| Name | Shortcut | Type | Example | Description |
+|------|----------|------|---------|-------------|
+|`--username`|`-u`| `string` | admin |This is your IRIDA account username.|
+|`--password`|`-pw`| `string` | password1 |This is your IRIDA account password.|
+|`--project`|`-p`| `int` | 1 |Project(s) to scan for StarAMR results.|
+|`--output`|`-o`| `string` | out |The name of the output excel file.|
+|`--config`|`-c`| `string` | /path/to/config/file/conf.yml |Path to a configuration file.|
 
 #### Optional:
-- `-h` or `--help`: Show help message.
-- `-v` or `--version`: The current version of irida-staramr-results.
-- `-sa` or `--separate_all`: Export each analysis results into separate output files resulting to one `.xlsx` file per analysis.
-- `-fd` or `--from_date`: Download only results of the analysis that were created FROM this date.*
-- `-td` or `--to_date`: Download only results of the analysis that were created UP UNTIL this date.*
+
+| Name | Shortcut | Type | Example | Description |
+|------|----------|------|---------|-------------|
+|`--help`|`-h`|N/A|N/A|Show help message.|
+|`--version`|`-v`|N/A|N/A|The current version of irida-staramr-results.|
+|`--separate_all`|`-sa`|N/A|N/A|Export each analysis results into separate output files resulting to one `.xlsx` file per analysis.|
+|`--from_date`|`-fd`|`string`|2021-01-03|Download only results of the analysis that were created **from** this date.*|
+|`--to_date`|`-td`|`string`|2021-04-01|Download only results of the analysis that were created **to** this date.*|
     
 __Notes:__ 
 - \* Dates are formatted as `YYYY-mm-dd` (eg. 2021-04-08) and include hours from 00:00:00 to 23:59:59 of the inputted date.
