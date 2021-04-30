@@ -402,6 +402,11 @@ class IridaAPI(object):
             except exceptions.IridaKeyError:
 
                 if file_key == "staramr-pointfinder.tsv":
+                    """
+                    We want ignore the IridaKeyError thrown and skip to the next iteration because PointFinder can be 
+                    disabled in an amr analysis run.
+                    This means the analysis does not contain the staramr-pointfinder.tsv file which is acceptable.
+                    """
                     logging.debug("No staramr-pointfinder.tsv found as one of the output files, skipping...")
                     continue
                 else:

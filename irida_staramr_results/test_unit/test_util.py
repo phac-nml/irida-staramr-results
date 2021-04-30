@@ -5,7 +5,7 @@ from irida_staramr_results import util
 
 class TestUtil(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         print("\nStarting " + self.__module__ + ": " + self._testMethodName)
 
     def tearDown(self):
@@ -16,8 +16,6 @@ class TestUtil(unittest.TestCase):
         Test local to timestamp conversion.
         :return:
         """
-
-        self.setup()
 
         fake_good_date = "2021-04-08"  # CDT
         res = util.local_to_timestamp(fake_good_date)

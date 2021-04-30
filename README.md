@@ -38,7 +38,7 @@ The following instructions describe how to install and execute IRIDA StarAMR Res
 
 4. __Execute the program:__
     ```
-    $ irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME> -fd <FROM_DATE> -td <TO_DATEg>
+    $ irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME> -fd <FROM_DATE> -td <TO_DATE>
     ```
 
 ## Arguments

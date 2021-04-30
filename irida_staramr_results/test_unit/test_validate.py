@@ -5,7 +5,7 @@ from irida_staramr_results import validate
 
 class TestValidate(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         print("\nStarting " + self.__module__ + ": " + self._testMethodName)
 
     def tearDown(self):
@@ -16,8 +16,6 @@ class TestValidate(unittest.TestCase):
         Test _validate_date function to return as expected
         :return:
         """
-
-        self.setup()
 
         fake_from = "2021-04-08"  # in local timezone
         fake_to = "2021-04-09"  # in local timezone

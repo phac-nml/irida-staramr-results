@@ -5,9 +5,9 @@ from irida_staramr_results.api.irida_api import IridaAPI
 from irida_staramr_results.api import exceptions
 
 
-class IridaApiTest(unittest.TestCase):
+class TestIridaApi(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         print("\nStarting " + self.__module__ + ": " + self._testMethodName)
 
     def tearDown(self):
@@ -22,8 +22,6 @@ class IridaApiTest(unittest.TestCase):
         :param mock_is_result_type_amr:
         :return:
         """
-
-        self.setup()
 
         fake_data_completed = {"analysisState": "COMPLETED", "identifier": 1}
         fake_data_error = {"analysisState": "ERROR", "identifier": 1}
@@ -47,8 +45,6 @@ class IridaApiTest(unittest.TestCase):
         :return:
         """
 
-        self.setup()
-
         fake_amr_type = {"analysisType": {"type": "AMR_DETECTION"}}
         fake_none_amr_type = {"analysisType": {"type": "NOT_AMR"}}
 
@@ -67,8 +63,6 @@ class IridaApiTest(unittest.TestCase):
         :param mock_get_analysis_submissions:
         :return:
         """
-
-        self.setup()
 
         def _is_submission_type_stub(args):
             return args
@@ -102,8 +96,6 @@ class IridaApiTest(unittest.TestCase):
         :param mock_get_analysis_submissions:
         :return:
         """
-
-        self.setup()
 
         mock_get_analysis_submissions.side_effect = KeyError
 

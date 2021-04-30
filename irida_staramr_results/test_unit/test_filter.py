@@ -6,7 +6,7 @@ from irida_staramr_results import filter
 
 class TestFilter(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         print("\nStarting " + self.__module__ + ": " + self._testMethodName)
 
     def tearDown(self):
@@ -17,8 +17,6 @@ class TestFilter(unittest.TestCase):
         Tests function that filters analysis by date range
         :return:
         """
-
-        self.setup()
 
         fake_list = [
             {"createdDate": 1611122400000},  # Jan 20 2021

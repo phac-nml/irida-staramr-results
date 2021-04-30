@@ -5,7 +5,7 @@ from irida_staramr_results.downloader import _get_output_file_name
 
 class TestDownloader(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         print("\nStarting " + self.__module__ + ": " + self._testMethodName)
 
     def tearDown(self):
@@ -16,8 +16,6 @@ class TestDownloader(unittest.TestCase):
         Test output file name generation is correct.
         :return:
         """
-
-        self.setup()
 
         fake_prefix_name = "out"
         fake_timestamp_in_millisec = 1611090794000
