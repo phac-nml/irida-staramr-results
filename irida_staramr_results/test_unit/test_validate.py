@@ -1,9 +1,15 @@
 import unittest
 
-from irida_staramr_results import cli
+from irida_staramr_results import validate
 
 
-class TestCli(unittest.TestCase):
+class TestValidate(unittest.TestCase):
+
+    def setup(self):
+        print("\nStarting " + self.__module__ + ": " + self._testMethodName)
+
+    def tearDown(self):
+        pass
 
     def test_validate_date(self):
         """
@@ -11,10 +17,12 @@ class TestCli(unittest.TestCase):
         :return:
         """
 
+        self.setup()
+
         fake_from = "2021-04-08"  # in local timezone
         fake_to = "2021-04-09"  # in local timezone
 
-        res = cli._validate_date(fake_from, fake_to)
+        res = validate.date_range(fake_from, fake_to)
 
         self.assertIn("from_date", res)
         self.assertIn("to_date", res)
@@ -28,22 +36,8 @@ class TestCli(unittest.TestCase):
         fake_from = None
         fake_to = None
 
-        res = cli._validate_date(fake_from, fake_to)
+        res = validate.date_range(fake_from, fake_to)
         self.assertEqual(0, res["from_date"])
-
-    def test_local_to_timestamp(self):
-        """
-        Test local to timestamp conversion.
-        :return:
-        """
-        fake_good_date = "2021-04-08"  # CDT
-        res = cli._local_to_timestamp(fake_good_date)
-        self.assertEqual(res, 1617840000000.0)
-
-        fake_bad_date = "2021/04/08"
-        with self.assertRaises(ValueError) as c:
-            cli._local_to_timestamp(fake_bad_date)
-            self.assertTrue("does not match format '%Y-%m-%d'" in c.exception)
 
 
 if __name__ == '__main__':
