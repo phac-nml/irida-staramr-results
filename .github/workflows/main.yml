@@ -12,18 +12,10 @@ on:
 jobs:
   build-project:
     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         python-version: ['3.8']
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2 # checkout repository from git
-    
-#     - name: Set up Python ${{ matrix.python-version }}
-#       uses: actions/setup-python@v2
-#       with:
-#         python-version: '3.8'
 
     - name: Build irida-staramr-results
       run: |
@@ -38,24 +30,27 @@ jobs:
   
   build-project-with-make:
     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         python-version: ['3.8']
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2 # checkout repository from git
-    
-#     - name: Set up Python ${{ matrix.python-version }}
-#       uses: actions/setup-python@v2
-#       with:
-#         python-version: '3.8'
 
     - name: Build irida-staramr-results
       run: |
         make
         source .virtualenv/bin/activate
         irida-staramr-results --help
+      
+  unit-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2 # checkout repository from git
+
+    - name: Run unit test
+      run: |
+        make unittests
         
   
 
