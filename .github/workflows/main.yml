@@ -3,9 +3,9 @@ name: Build
 on:
   pull_request: # Run on all pull requests
   push:
-    branches: # Run on any push to development or master
-      - development
-      - main
+    branches: # Run on any push to development or main
+    - development
+    - main
 
   workflow_dispatch: # allow to run this workflow manually from the Actions tab
 
@@ -17,17 +17,17 @@ jobs:
         python-version: ['3.8']
 
     steps:
-      - uses: actions/checkout@v2 # checkout repository from git
-      - name: Set up Python ${{ matrix.python-version }}
-        with:
-          python-version: '3.8'
+    - uses: actions/checkout@v2 # checkout repository from git
+    - name: Set up Python ${{ matrix.python-version }}
+      with:
+        python-version: '3.8'
 
-      - name: Build irida-staramr-results
-        run: |
-          cd irida-staramr-results
-          make
-          source .virtualenv/bin/activate
-          irida-staramr-results --help
+    - name: Build irida-staramr-results
+      run: |
+        cd irida-staramr-results
+        make
+        source .virtualenv/bin/activate
+        irida-staramr-results --help
 
 
 
