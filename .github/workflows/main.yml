@@ -17,17 +17,21 @@ jobs:
         python-version: ['3.8']
 
     steps:
+    - name: Checkout Repository
     - uses: actions/checkout@v2 # checkout repository from git
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
+    
+#     - name: Set up Python ${{ matrix.python-version }}
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: '3.8'
 
     - name: Build irida-staramr-results
       run: |
         make
         source .virtualenv/bin/activate
         irida-staramr-results --help
+        
+  
 
 
 
