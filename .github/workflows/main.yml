@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - name: Checkout Repository
-    - uses: actions/checkout@v2 # checkout repository from git
+      uses: actions/checkout@v2 # checkout repository from git
     
 #     - name: Set up Python ${{ matrix.python-version }}
 #       uses: actions/setup-python@v2
