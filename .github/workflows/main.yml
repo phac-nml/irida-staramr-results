@@ -28,10 +28,12 @@ jobs:
     - name: Build irida-staramr-results
       run: |
         python3 -m venv .virtualenv
+        source .virtualenv/bin/activate
         pip3 install --upgrade wheel pip
         pip install e .
         python3 setup.py sdist bdist_wheel
         irida-staramr-results --help
+        deactivate
         
   
   build-project-with-make:
