@@ -25,7 +25,6 @@ jobs:
 
     - name: Build irida-staramr-results
       run: |
-        cd irida-staramr-results
         make
         source .virtualenv/bin/activate
         irida-staramr-results --help
