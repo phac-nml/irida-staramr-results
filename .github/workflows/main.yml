@@ -19,6 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2 # checkout repository from git
     - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
       with:
         python-version: '3.8'
 
