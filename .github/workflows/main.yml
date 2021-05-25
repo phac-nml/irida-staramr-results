@@ -27,6 +27,30 @@ jobs:
 
     - name: Build irida-staramr-results
       run: |
+        python3 -m venv .virtualenv
+        pip3 install --upgrade wheel pip
+        pip install e .
+        pyton3 setup.py sdist bdist_wheel
+        irida-staramr-results --help
+        
+  
+  build-project-with-make:
+    runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         python-version: ['3.8']
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2 # checkout repository from git
+    
+#     - name: Set up Python ${{ matrix.python-version }}
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: '3.8'
+
+    - name: Build irida-staramr-results
+      run: |
         make
         source .virtualenv/bin/activate
         irida-staramr-results --help
