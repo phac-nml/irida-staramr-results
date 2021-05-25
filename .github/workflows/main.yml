@@ -30,7 +30,7 @@ jobs:
         python3 -m venv .virtualenv
         pip3 install --upgrade wheel pip
         pip install e .
-        pyton3 setup.py sdist bdist_wheel
+        python3 setup.py sdist bdist_wheel
         irida-staramr-results --help
         
   
