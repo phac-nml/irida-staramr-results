@@ -50,6 +50,7 @@ jobs:
 
     - name: Run unit test
       run: |
+        make
         make unittests
         
   
