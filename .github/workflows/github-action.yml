@@ -1,0 +1,22 @@
+name: Unit Test
+
+on:
+  pull_request: # Run on all pull requests
+  push:
+    branches: # Run on any push to development or main
+    - development
+    - main
+
+  workflow_dispatch: # allow to run this workflow manually from the Actions tab
+
+jobs:
+      
+  unit-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2 # checkout repository from git
+
+    - name: Run unit test
+      run: make unittests
