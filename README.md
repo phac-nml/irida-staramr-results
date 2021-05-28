@@ -40,27 +40,25 @@ IRIDA StarAMR Results program enables StarAMR analysis results that were run thr
    __Notes:__ 
    - \* Dates are formatted as `YYYY-mm-dd` (eg. 2021-04-08) and include hours from 00:00:00 to 23:59:59 of the inputted date.
 
-
-# Installing from source code
-
-   ### Python
+# Setup
+### Python
    IRIDA StarAMR Results requires **Python version 3.8 or later**. Check the Python version you are using with:
    ```
    $ python --version
    ```
 
-   ### Configuration for IRIDA REST API
-   - You will need to create a client in IRIDA. Refer to [IRIDA client configuration](https://irida.corefacility.ca/documentation/user/administrator/#managing-system-clients) guide for more details.
-   - You will need to create your own configuration file in YAML. Here is an [example](./example-config.yml).
+### Configuration for IRIDA REST API
+- You will need to create a client in IRIDA. Refer to [IRIDA client configuration](https://irida.corefacility.ca/documentation/user/administrator/#managing-system-clients) guide for more details.
+- You will need to create your own configuration file in YAML. Here is an [example](./example-config.yml).
 
-     #### Fields:
+  #### Fields:
 
-     - `base-url`: The server URL to download results from. If you navigate to your instance of IRIDA in your web browser, the URL (after you’ve logged in) will often look like: https://irida.corefacility.ca/irida/. The URL you should enter into the Server URL field is that URL, with api/ at the end. So in the case of https://irida.corefacility.ca/irida/, you should enter the URL https://irida.corefacility.ca/irida/api/
-     - `client-id`: The id from the IRIDA client you created
-     - `client-secret`: The id from the IRIDA client you created
+  - `base-url`: The server URL to download results from. If you navigate to your instance of IRIDA in your web browser, the URL (after you’ve logged in) will often look like: https://irida.corefacility.ca/irida/. The URL you should enter into the Server URL field is that URL, with api/ at the end. So in the case of https://irida.corefacility.ca/irida/, you should enter the URL https://irida.corefacility.ca/irida/api/
+  - `client-id`: The id from the IRIDA client you created
+  - `client-secret`: The id from the IRIDA client you created
 
-----
 
+# Installing from source code
 The following instructions describe how to install and execute IRIDA StarAMR Results from repository.
 
 1. __Clone the repository:__
