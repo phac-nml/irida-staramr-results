@@ -12,6 +12,7 @@ wheel:
 
 unittests: clean env
 	${ACTIVATOR} .virtualenv/bin/activate
+	${PIP} install -e .
 	${PYTHON} -m unittest discover -s test_unit -t irida_staramr_results
 
 env:
