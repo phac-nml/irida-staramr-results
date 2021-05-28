@@ -49,9 +49,7 @@ jobs:
       uses: actions/checkout@v2 # checkout repository from git
 
     - name: Run unit test
-      run: |
-        make
-        make unittests
+      run: make unittests
         
   
 
