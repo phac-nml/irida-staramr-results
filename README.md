@@ -75,7 +75,7 @@ The following instructions describe how to install and execute IRIDA StarAMR Res
    $ source .virtualenv/bin/activate
    ```
 
-3. __Execute the program:__ See [argument chart](##Arguments) above for what these arguments means. 
+3. __Execute the program:__ See [argument chart](#Arguments) above for what these arguments means. 
     ```
     $ irida-staramr-results -u <IRIDA_USERNAME> -pw <IRIDA_PASSWORD> -c <CONFIG_FILE_PATH> -p <PROJECT> -o <OUTPUT_FILE_NAME> -fd <FROM_DATE> -td <TO_DATE>
     ```
