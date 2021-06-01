@@ -48,7 +48,10 @@ IRIDA StarAMR Results program enables StarAMR analysis results of a single proje
    ```
 
 ### Configuration for IRIDA REST API
-- You will need to create a client in IRIDA. Refer to [IRIDA client configuration](https://irida.corefacility.ca/documentation/user/administrator/#managing-system-clients) guide for more details.
+
+- You will need to have a client instance in IRIDA.
+  - Only IRIDA administrators can create client instances. Users should contact their IRIDA admin for client credentials.
+  - Refer to [IRIDA client configuration](https://irida.corefacility.ca/documentation/user/administrator/#managing-system-clients) guide for more details.
 - You will need to create your own configuration file in YAML. Here is an [example](./example-config.yml).
 
   #### Fields:
