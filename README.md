@@ -30,7 +30,7 @@ IRIDA StarAMR Results program enables StarAMR analysis results of a single proje
    |------|----------|------|---------|-------------|
    |`--help`|`-h`|N/A|N/A|Show help message.|
    |`--version`|`-v`|N/A|N/A|The current version of irida-staramr-results.|
-   |`--separate_all`|`-sa`|N/A|N/A|Export each analysis results into separate output files resulting to one `.xlsx` file per analysis.|
+   |`--split_results`|`-sr`|N/A|N/A|Export each analysis results into separate output files resulting to one `.xlsx` file per analysis.|
    |`--username`|`-u`| `string` | admin |This is your IRIDA account username.|
    |`--password`|`-pw`| `string` | password1 |This is your IRIDA account password.|
    |`--output`|`-o`| `string` | out |The name of the output excel file.|
