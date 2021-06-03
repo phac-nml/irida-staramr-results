@@ -21,10 +21,7 @@ IRIDA StarAMR Results program enables StarAMR analysis results of a single proje
 
    | Name | Shortcut | Type | Example | Description |
    |------|----------|------|---------|-------------|
-   |`--username`|`-u`| `string` | admin |This is your IRIDA account username.|
-   |`--password`|`-pw`| `string` | password1 |This is your IRIDA account password.|
    |`--project`|`-p`| `int` | 1 |Project(s) to scan for StarAMR results.|
-   |`--output`|`-o`| `string` | out |The name of the output excel file.|
    |`--config`|`-c`| `string` | /path/to/conf.yml |Path to a configuration file. [See configuration details here.](#Configuration-for-IRIDA-REST-API)|
 
    #### Optional:
@@ -34,6 +31,9 @@ IRIDA StarAMR Results program enables StarAMR analysis results of a single proje
    |`--help`|`-h`|N/A|N/A|Show help message.|
    |`--version`|`-v`|N/A|N/A|The current version of irida-staramr-results.|
    |`--separate_all`|`-sa`|N/A|N/A|Export each analysis results into separate output files resulting to one `.xlsx` file per analysis.|
+   |`--username`|`-u`| `string` | admin |This is your IRIDA account username.|
+   |`--password`|`-pw`| `string` | password1 |This is your IRIDA account password.|
+   |`--output`|`-o`| `string` | out |The name of the output excel file.|
    |`--from_date`|`-fd`|`string`|2021-01-03|Download only results of the analysis that were created **from** this date.*|
    |`--to_date`|`-td`|`string`|2021-04-01|Download only results of the analysis that were created **to** this date.*|
 
