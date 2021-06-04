@@ -26,13 +26,13 @@ def init_argparser():
                                  help="This is your IRIDA account password.")
     argument_parser.add_argument("-c", "--config", action="store", required=True,
                                  help="Required. Path to a configuration file. ")
-    argument_parser.add_argument("-sa", "--separate_all", action="store_true",
+    argument_parser.add_argument("-sr", "--split_results", action="store_true",
                                  help="Export each analysis results into separate output files resulting to "
                                       "one excel file per analysis.")
     argument_parser.add_argument("-fd", "--from_date", action="store",
-                                 help="Download only results of the analysis that were created FROM this date.")
+                                 help="Download only results of the analysis that were created FROM this date (YYYY-MM-DD).")
     argument_parser.add_argument("-td", "--to_date", action="store",
-                                 help="Download only results of the analysis that were created UP UNTIL this date.")
+                                 help="Download only results of the analysis that were created UP UNTIL this date (YYYY-MM-DD).")
 
 
     return argument_parser
@@ -57,7 +57,7 @@ def _validate_args(args):
             'config': args.config,
             'project': args.project,
             'output': output_file_name,
-            'separate_all': args.separate_all,
+            'split_results': args.split_results,
             'from_date': date_range["from_date"],
             'to_date': date_range["to_date"]}
 
@@ -107,7 +107,7 @@ def main():
     logging.info("Successfully connected to IRIDA API.")
 
     # Start downloading results
-    downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["separate_all"],
+    downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["split_results"],
                                     args_dict["from_date"], args_dict["to_date"])
 
 

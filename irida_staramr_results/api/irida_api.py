@@ -49,10 +49,6 @@ class IridaAPI(object):
         self.cached_projects = None
         self.cached_samples = {}
 
-        # these two are used when sending signals to the progress module
-        self._current_upload_project_id = None
-        self._current_upload_sample_name = None
-
     @property
     def _session(self):
         try:  # Todo: rework this code without the try/catch/finally and odd exception raise
@@ -308,6 +304,7 @@ class IridaAPI(object):
         """
 
         try:
+            logging.info(f"Requesting project [{project_id}] analysis submissions.")
             project_analysis_submissions = self._get_analysis_submissions(project_id)
         except KeyError:
             error_txt = f"The given project ID doesn't exist: {project_id}. "
@@ -331,6 +328,7 @@ class IridaAPI(object):
         project_url = self._get_link(self.base_url, "projects")
 
         try:
+            logging.info(f"Requesting {project_url}.")
             analysis_submissions_url = self._get_link(project_url, "project/analyses",
                                                       target_dict={
                                                           "key": "identifier",
@@ -356,6 +354,7 @@ class IridaAPI(object):
         analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         try:
+            logging.info(f"Requesting {analysis_submission_url}.")
             analysis_results_url = self._get_link(analysis_submission_url, "analysis",
                                                   target_dict={
                                                       "key": "identifier",
@@ -370,6 +369,7 @@ class IridaAPI(object):
                          f"[{analysis_submission_id}]. Moving on...")
             analysis_result = {}
         else:
+            logging.info(f"Requesting {analysis_results_url}.")
             analysis_result = self._session.get(analysis_results_url).json()["resource"]
 
         return analysis_result
