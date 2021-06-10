@@ -32,6 +32,7 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
         return
 
     # Filter analysis created since target date (in timestamp)
+    logging.info("Filtering analysis results by date (defaults to all if not specified as an argument).")
     amr_completed_analysis_submissions = filter.by_date_range(amr_completed_analysis_submissions, from_timestamp, to_timestamp)
 
     if len(amr_completed_analysis_submissions) < 1:

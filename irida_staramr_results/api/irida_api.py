@@ -311,6 +311,7 @@ class IridaAPI(object):
             raise exceptions.IridaResourceError(error_txt)
 
         # Filter AMR Detection type
+        logging.info("Filtering completed AMR Detection type results.")
         amr_analysis_submissions = [analysis_submission for analysis_submission in project_analysis_submissions
                                     if self._is_submission_type_amr(analysis_submission)]
         if len(amr_analysis_submissions) < 1:
@@ -338,6 +339,7 @@ class IridaAPI(object):
             logging.error(f"The given project ID doesn't exist: {project_id}")
             raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
 
+        logging.info(f"Requesting {analysis_submissions_url}.")
         response = self._session.get(analysis_submissions_url)
         analysis_submissions = response.json()["resource"]["resources"]
 
@@ -354,7 +356,6 @@ class IridaAPI(object):
         analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         try:
-            logging.info(f"Requesting {analysis_submission_url}.")
             analysis_results_url = self._get_link(analysis_submission_url, "analysis",
                                                   target_dict={
                                                       "key": "identifier",
