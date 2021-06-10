@@ -46,11 +46,6 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
     logging.info(f"Creating directory name {_directory_name} to store results files.")
     os.mkdir(_directory_name)
 
-
-    # Filter analysis created since target date (in timestamp)
-    amr_completed_analysis_submissions = filter.by_date_range(amr_completed_analysis_submissions,
-                                                              from_timestamp, to_timestamp)
-
     if separate_mode:
         # Write the collection of files into a file, one file per analysis
         logging.info(f"Writing each results data per analysis in their separate output file...")
