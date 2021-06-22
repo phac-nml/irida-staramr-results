@@ -431,11 +431,9 @@ class IridaAPI(object):
                     #               f"and ensure the analysis status is COMPLETED.")
 
             # response containing json
-            logging.info(f"Requesting {file_url} in json.")
             response_json = self._session.get(file_url)
 
             # response containing text (actual file contents)
-            logging.info(f"Requesting contents of {file_url} (text).")
             response_txt = self._session.get(file_url, headers={"Accept": "text/plain"})
 
             # create output object
@@ -458,6 +456,5 @@ class IridaAPI(object):
 
         analysis_result_url = f"{self.analysis_submission_url}/{self.target_submission_ids[analysis_id]}/analysis"
 
-        logging.info(f"Requesting for File URL of {analysis_result_url}.")
         file_url = self._get_link(analysis_result_url, "outputFile/" + file_key)
         return file_url
