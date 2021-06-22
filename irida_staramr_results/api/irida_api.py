@@ -367,11 +367,9 @@ class IridaAPI(object):
 
         try:
             logging.info("get analysis_results_url")
-            analysis_results_url = self._get_link(self.analysis_submission_url, "analysis", # causing ~7 seconds delay
-                                                  target_dict={
-                                                      "key": "identifier",
-                                                      "value": analysis_submission_id
-                                                  })
+            analysis_results_url = f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
+
+
         except exceptions.IridaKeyError:
             """
             Catches an exception if an analysis submission does not contain an analysis result.
