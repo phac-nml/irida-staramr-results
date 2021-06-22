@@ -45,6 +45,7 @@ class IridaAPI(object):
 
         self.analysis_submission_url = None
         self.project_url = None
+        self.target_submission_ids = {}  # { result_id : submission_id }
 
         self._session_lock = threading.Lock()
         self._session_set_externally = False
@@ -315,12 +316,13 @@ class IridaAPI(object):
             error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaResourceError(error_txt)
 
-        # Filter AMR Detection type
+        # Filter Completed AMR Detection type
         for analysis_submission in project_analysis_submissions:
             if analysis_submission["analysisState"] == "COMPLETED":
                 analysis_result = self._get_analysis_result(analysis_submission["identifier"])
                 if self._is_result_type_amr(analysis_result):
                     completed_amr_analysis_results.append(analysis_result)
+                    self.target_submission_ids[analysis_result["identifier"]] = analysis_submission["identifier"]
 
         if len(completed_amr_analysis_results) < 1:
             logging.warning(f"No Completed AMR Detection type found in project [{project_id}].")
@@ -362,11 +364,10 @@ class IridaAPI(object):
         """
 
         if not self.analysis_submission_url:
-            logging.info("get analysis_submission_url ")
+            logging.info("Requesting Analysis Submissions URL.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         try:
-            logging.info("get analysis_results_url")
             analysis_results_url = f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
 
 
@@ -379,12 +380,12 @@ class IridaAPI(object):
                          f"[{analysis_submission_id}]. Moving on...")
             analysis_result = {}
         else:
-            logging.info(f"Requesting {analysis_results_url}.")  # causing ~7 seconds delay
+            logging.info(f"Requesting {analysis_results_url}.")
             analysis_result = self._session.get(analysis_results_url).json()["resource"]
 
         return analysis_result
 
-    def get_analysis_result_files(self, analysis_submission_id):
+    def get_analysis_result_files(self, analysis_id):
         """
         Returns a list of AmrOutput, which are file objects, given analysis submission id.
         This function accepts analysis_submission_id with COMPLETED analysis status and an AMR_DETECTION type,
@@ -408,7 +409,7 @@ class IridaAPI(object):
         # get file urls base on file_list
         for file_key in file_list:
             try:
-                file_url = self._get_file_url(analysis_submission_id, file_key)
+                file_url = self._get_file_url(analysis_id, file_key)
             except exceptions.IridaKeyError:
 
                 if file_key == "staramr-pointfinder.tsv":
@@ -425,14 +426,16 @@ class IridaAPI(object):
                     For our case, this shouldn't happen since we use completed amr type analysis submission given 
                     by the caller (amr_downloader).
                     """
-                    logging.error(f"No analysis result exists for analysis submission id "
-                                  f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
-                                  f"and ensure the analysis status is COMPLETED.")
+                    # logging.error(f"No analysis result exists for analysis submission id "
+                    #               f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
+                    #               f"and ensure the analysis status is COMPLETED.")
 
             # response containing json
+            logging.info(f"Requesting {file_url} in json.")
             response_json = self._session.get(file_url)
 
             # response containing text (actual file contents)
+            logging.info(f"Requesting contents of {file_url} (text).")
             response_txt = self._session.get(file_url, headers={"Accept": "text/plain"})
 
             # create output object
@@ -443,7 +446,7 @@ class IridaAPI(object):
 
         return result_files
 
-    def _get_file_url(self, analysis_submission_id, file_key):
+    def _get_file_url(self, analysis_id, file_key):
         """
         Returns a URL of a file given an file key (file name with extension)
         :param analysis_submission_id: Needed for api call.
@@ -453,11 +456,8 @@ class IridaAPI(object):
         if not self.analysis_submission_url:
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
-        analysis_result_url = self._get_link(self.analysis_submission_url, "analysis", target_dict={
-            "key": "identifier",
-            "value": analysis_submission_id
-        })
+        analysis_result_url = f"{self.analysis_submission_url}/{self.target_submission_ids[analysis_id]}/analysis"
 
-
+        logging.info(f"Requesting for File URL of {analysis_result_url}.")
         file_url = self._get_link(analysis_result_url, "outputFile/" + file_key)
         return file_url
