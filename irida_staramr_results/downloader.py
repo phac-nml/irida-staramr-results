@@ -25,17 +25,16 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
     logging.info(f"Requesting completed amr analysis submissions for project id [{project_id}]. "
                  f"This may take a while...")
 
-    amr_completed_analysis_submissions = irida_api.get_completed_amr_analysis_submissions(project_id)
+    amr_completed_analysis_results = irida_api.get_completed_amr_analysis_results(project_id)
 
-    if len(amr_completed_analysis_submissions) < 1:
-        logging.warning(f"No completed amr analysis submission type for project id [{project_id}].")
+    if len(amr_completed_analysis_results) < 1:
+        logging.warning(f"No completed amr analysis results type for project id [{project_id}].")
         return
 
     # Filter analysis created since target date (in timestamp)
-    amr_completed_analysis_submissions = filter.by_date_range(amr_completed_analysis_submissions, from_timestamp, to_timestamp)
+    amr_completed_analysis_results = filter.by_date_range(amr_completed_analysis_results, from_timestamp, to_timestamp)
 
-    if len(amr_completed_analysis_submissions) < 1:
-
+    if len(amr_completed_analysis_results) < 1:
         from_date = util.timestamp_to_local(from_timestamp)
         to_date = util.timestamp_to_local(to_timestamp - 86400000)
         logging.warning(f"No completed amr analysis submission created from [{from_date}] to [{to_date}]. Exiting..")
@@ -47,14 +46,10 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
     os.mkdir(_directory_name)
 
 
-    # Filter analysis created since target date (in timestamp)
-    amr_completed_analysis_submissions = filter.by_date_range(amr_completed_analysis_submissions,
-                                                              from_timestamp, to_timestamp)
-
     if separate_mode:
         # Write the collection of files into a file, one file per analysis
         logging.info(f"Writing each results data per analysis in their separate output file...")
-        for a in amr_completed_analysis_submissions:
+        for a in amr_completed_analysis_results:
             results_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _files_to_data_frames(results_files)
             logging.info(f"Creating a file for analysis [{a['name']}]. ")
@@ -64,7 +59,7 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
         # Base case, collect all the data into dataframes, one per unique file name, then write a single file.
         logging.info(f"Appending all results data in one output file.")
         data_frames = {}
-        for a in amr_completed_analysis_submissions:
+        for a in amr_completed_analysis_results:
             logging.info(f"Appending analysis [{a['name']}]. ")
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _append_file_data_to_existing_data_frames(result_files, data_frames)

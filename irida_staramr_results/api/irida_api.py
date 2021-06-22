@@ -43,6 +43,9 @@ class IridaAPI(object):
         self.max_wait_time = max_wait_time
         self.http_max_retries = http_max_retries
 
+        self.analysis_submission_url = None
+        self.project_url = None
+
         self._session_lock = threading.Lock()
         self._session_set_externally = False
         self._create_session()
@@ -295,7 +298,7 @@ class IridaAPI(object):
 
         return False
 
-    def get_completed_amr_analysis_submissions(self, project_id):
+    def get_completed_amr_analysis_results(self, project_id):
         """
         Get COMPLETED (not error) analysis submissions of AMR DETECTION type from a project id.
         If no analysis results found in the project, it returns an empty array.
@@ -303,33 +306,39 @@ class IridaAPI(object):
         :return amr_analysis_submissions:
         """
 
+        completed_amr_analysis_results = []
+
         try:
             logging.info(f"Requesting project [{project_id}] analysis submissions.")
-            project_analysis_submissions = self._get_analysis_submissions(project_id)
+            project_analysis_submissions = self._get_project_analysis_submissions(project_id)
         except KeyError:
             error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaResourceError(error_txt)
 
         # Filter AMR Detection type
-        amr_analysis_submissions = [analysis_submission for analysis_submission in project_analysis_submissions
-                                    if self._is_submission_type_amr(analysis_submission)]
-        if len(amr_analysis_submissions) < 1:
+        for analysis_submission in project_analysis_submissions:
+            if analysis_submission["analysisState"] == "COMPLETED":
+                analysis_result = self._get_analysis_result(analysis_submission["identifier"])
+                if self._is_result_type_amr(analysis_result):
+                    completed_amr_analysis_results.append(analysis_result)
+
+        if len(completed_amr_analysis_results) < 1:
             logging.warning(f"No Completed AMR Detection type found in project [{project_id}].")
 
-        return amr_analysis_submissions
+        return completed_amr_analysis_results
 
-    def _get_analysis_submissions(self, project_id):
+    def _get_project_analysis_submissions(self, project_id):
         """
         Returns an array of ALL analysis submissions (regardless of the type) for a given project
         :param project_id:
         :return analysis_submissions:
         """
-
-        project_url = self._get_link(self.base_url, "projects")
+        if not self.project_url:
+            self.project_url = self._get_link(self.base_url, "projects")
 
         try:
-            logging.info(f"Requesting {project_url}.")
-            analysis_submissions_url = self._get_link(project_url, "project/analyses",
+            logging.info(f"Requesting {self.project_url}.")
+            project_analysis_submissions_url = self._get_link(self.project_url, "project/analyses",
                                                       target_dict={
                                                           "key": "identifier",
                                                           "value": project_id
@@ -338,7 +347,7 @@ class IridaAPI(object):
             logging.error(f"The given project ID doesn't exist: {project_id}")
             raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
 
-        response = self._session.get(analysis_submissions_url)
+        response = self._session.get(project_analysis_submissions_url)
         analysis_submissions = response.json()["resource"]["resources"]
 
         return analysis_submissions
@@ -351,11 +360,14 @@ class IridaAPI(object):
         :param analysis_submission_id:
         :return analysis_result:
         """
-        analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
+
+        if not self.analysis_submission_url:
+            logging.info("get analysis_submission_url ")
+            self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         try:
-            logging.info(f"Requesting {analysis_submission_url}.")
-            analysis_results_url = self._get_link(analysis_submission_url, "analysis",
+            logging.info("get analysis_results_url")
+            analysis_results_url = self._get_link(self.analysis_submission_url, "analysis", # causing ~7 seconds delay
                                                   target_dict={
                                                       "key": "identifier",
                                                       "value": analysis_submission_id
@@ -369,7 +381,7 @@ class IridaAPI(object):
                          f"[{analysis_submission_id}]. Moving on...")
             analysis_result = {}
         else:
-            logging.info(f"Requesting {analysis_results_url}.")
+            logging.info(f"Requesting {analysis_results_url}.")  # causing ~7 seconds delay
             analysis_result = self._session.get(analysis_results_url).json()["resource"]
 
         return analysis_result
@@ -440,8 +452,10 @@ class IridaAPI(object):
         :param file_key:
         :return:
         """
-        analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
-        analysis_result_url = self._get_link(analysis_submission_url, "analysis", target_dict={
+        if not self.analysis_submission_url:
+            self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
+
+        analysis_result_url = self._get_link(self.analysis_submission_url, "analysis", target_dict={
             "key": "identifier",
             "value": analysis_submission_id
         })

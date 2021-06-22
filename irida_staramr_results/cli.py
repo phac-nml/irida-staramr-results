@@ -6,8 +6,9 @@ from irida_staramr_results.version import __version__
 from irida_staramr_results import downloader, api, parser, validate
 
 
-logging.basicConfig(level=logging.INFO)
-
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 def init_argparser():
     argument_parser = argparse.ArgumentParser(
