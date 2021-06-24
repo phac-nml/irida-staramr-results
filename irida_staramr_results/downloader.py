@@ -50,11 +50,10 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
         # Write the collection of files into a file, one file per analysis
         logging.info(f"Writing each results data per analysis in their separate output file...")
         for a in amr_completed_analysis_results:
-            logging.info(f"Requesting results files of analysis [{a['identifier']}]")
             results_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _files_to_data_frames(results_files)
-            logging.info(f"Creating a file for analysis [{a['identifier']}]. ")
             out_name = _get_output_file_name(output_file_name, a["createdDate"])
+            logging.info(f"Creating a file named {out_name}.xlsx for analysis [{a['identifier']}]. ")
             _data_frames_to_excel(data_frames, out_name)
     else:
         # Base case, collect all the data into dataframes, one per unique file name, then write a single file.
@@ -105,7 +104,6 @@ def _data_frames_to_excel(data_frames, output_file_name):
     """
 
     # create new file
-    logging.info(f"Creating a new file {output_file_name}.xlsx.")
     target_path = f"{_directory_name}/{output_file_name}.xlsx"
     with pd.ExcelWriter(target_path, engine='xlsxwriter') as writer:
         # append data frame to file
@@ -146,17 +144,14 @@ def _auto_fit_column_width(writer, data_frame, sheet_name, max_width=75):
 
 def _files_to_data_frames(results_files):
     """
-    Accepts a list of results files and returns them as dictionary of filename:dataframe key:value pairs
-    :param results_files:
+    Accepts a list of results files and returns them as dictionary of sheetname:dataframe pairs.
+    eg. { "sheetname":{dataframe}, ..., "sheetname":{dataframe} }
+    :param results_files: array of Results object
     :return:
     """
     data_frames = {}
     for file in results_files:
         data_frames[file.get_sheet_name()] = _convert_to_df(file.get_contents())
-
-    """
-    {sheetname: {df}, sheetname: {df}, ...}
-    """
 
     return data_frames
 
