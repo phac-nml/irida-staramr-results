@@ -356,7 +356,6 @@ class IridaAPI(object):
 
         return analysis_submissions
 
-    # TODO
     def _get_analysis_result(self, analysis_submission_id):
         """
         Returns an analysis result json object based on the analysis submission id.
@@ -370,7 +369,7 @@ class IridaAPI(object):
             logging.info("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
-        analysis_results_url = f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
+        analysis_results_url = self.get_analysis_results_url(analysis_submission_id)
 
         logging.info(f"Requesting {analysis_results_url}.")
         try:
@@ -459,7 +458,22 @@ class IridaAPI(object):
         if not self.analysis_submission_url:
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
-        analysis_result_url = f"{self.analysis_submission_url}/{self.target_submission_ids[analysis_id]}/analysis"
+        analysis_result_url = self.get_analysis_results_url(self.target_submission_ids[analysis_id])
 
         file_url = self._get_link(analysis_result_url, "outputFile/" + file_key)
         return file_url
+
+    def get_analysis_results_url(self, analysis_submission_id):
+        """
+        This method returns analysis results url given the analysis submission id.
+        Note: self._get_link() is not used here to lessen the amount of api calls made.
+        A drawback, this method assumes the endpoint is /analysisSubmissions/{submission_id}/analysis.
+        But the benefits of improved efficiency outweighs the drawback.
+        :param analysis_submission_id:
+        :return analysis results url: string
+        """
+        if not self.analysis_submission_url:
+            logging.info("Requesting analysis submissions url.")
+            self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
+
+        return f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
