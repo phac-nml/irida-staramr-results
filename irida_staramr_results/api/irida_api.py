@@ -324,7 +324,7 @@ class IridaAPI(object):
                     completed_amr_analysis_results.append(analysis_result)
 
                     # cache submission id with corresponding result id
-                    self.target_submission_ids[analysis_result["identifier"]] = analysis_submission["identifier"]
+                    self._store_submission_id(analysis_result["identifier"], analysis_submission["identifier"])
 
         if len(completed_amr_analysis_results) < 1:
             logging.warning(f"No Completed AMR Detection type found in project [{project_id}].")
@@ -477,3 +477,13 @@ class IridaAPI(object):
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         return f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
+
+    def _store_submission_id(self, results_id, submission_id):
+        """
+        This method stores results id and submission id to a dictionary declared as an instance variable called
+        target_submission_ids. eg. { results_id:submission_id, ... }
+        :param results_id: the id of analysis results corresponding to the analysis submission given.
+        :param submission_id: analysis submission id
+        :return None:
+        """
+        self.target_submission_ids[results_id] = submission_id
