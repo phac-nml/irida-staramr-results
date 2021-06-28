@@ -43,6 +43,10 @@ class IridaAPI(object):
         self.max_wait_time = max_wait_time
         self.http_max_retries = http_max_retries
 
+        self.analysis_submission_url = None
+        self.project_url = None
+        self.target_submission_ids = {}  # { result_id : submission_id }
+
         self._session_lock = threading.Lock()
         self._session_set_externally = False
         self._create_session()
@@ -271,8 +275,8 @@ class IridaAPI(object):
     def _is_result_type_amr(self, analysis_result):
         """
         Checks if the analysis result is an amr detection type.
-        This function is used in `_is_submission_type_amr()`
-        :param analysis_result:
+        This function is used in `get_completed_amr_analysis_results()`
+        :param analysis_result: a dictionary of an analysis results with keys `analysisType` and `type`
         :return boolean:
         """
         return analysis_result["analysisType"]["type"] == "AMR_DETECTION"
@@ -295,41 +299,50 @@ class IridaAPI(object):
 
         return False
 
-    def get_completed_amr_analysis_submissions(self, project_id):
+    def get_completed_amr_analysis_results(self, project_id):
         """
-        Get COMPLETED (not error) analysis submissions of AMR DETECTION type from a project id.
+        Get COMPLETED analysis results of AMR DETECTION type from a project id.
         If no analysis results found in the project, it returns an empty array.
-        :param project_id:
-        :return amr_analysis_submissions:
+        :param project_id: integer
+        :return completed_amr_analysis_results: an array of completed amr analysis result dictionaries
         """
 
+        completed_amr_analysis_results = []
+
         try:
-            logging.info(f"Requesting project [{project_id}] analysis submissions.")
-            project_analysis_submissions = self._get_analysis_submissions(project_id)
+            logging.info(f"Requesting project [{project_id}]'s analysis submissions.")
+            project_analysis_submissions = self._get_project_analysis_submissions(project_id)
         except KeyError:
             error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaResourceError(error_txt)
 
-        # Filter AMR Detection type
-        amr_analysis_submissions = [analysis_submission for analysis_submission in project_analysis_submissions
-                                    if self._is_submission_type_amr(analysis_submission)]
-        if len(amr_analysis_submissions) < 1:
+        # Filter Completed AMR Detection type
+        for analysis_submission in project_analysis_submissions:
+            if analysis_submission["analysisState"] == "COMPLETED":
+                analysis_result = self._get_analysis_result(analysis_submission["identifier"])
+                if self._is_result_type_amr(analysis_result):
+                    completed_amr_analysis_results.append(analysis_result)
+
+                    # cache submission id with corresponding result id
+                    self._store_submission_id(analysis_result["identifier"], analysis_submission["identifier"])
+
+        if len(completed_amr_analysis_results) < 1:
             logging.warning(f"No Completed AMR Detection type found in project [{project_id}].")
 
-        return amr_analysis_submissions
+        return completed_amr_analysis_results
 
-    def _get_analysis_submissions(self, project_id):
+    def _get_project_analysis_submissions(self, project_id):
         """
         Returns an array of ALL analysis submissions (regardless of the type) for a given project
-        :param project_id:
-        :return analysis_submissions:
+        :param project_id: integer
+        :return analysis_submissions: array
         """
-
-        project_url = self._get_link(self.base_url, "projects")
+        if not self.project_url:
+            self.project_url = self._get_link(self.base_url, "projects")
 
         try:
-            logging.info(f"Requesting {project_url}.")
-            analysis_submissions_url = self._get_link(project_url, "project/analyses",
+            logging.info(f"Requesting {self.project_url}.")
+            project_analysis_submissions_url = self._get_link(self.project_url, "project/analyses",
                                                       target_dict={
                                                           "key": "identifier",
                                                           "value": project_id
@@ -338,7 +351,7 @@ class IridaAPI(object):
             logging.error(f"The given project ID doesn't exist: {project_id}")
             raise exceptions.IridaResourceError("The given project ID doesn't exist", project_id)
 
-        response = self._session.get(analysis_submissions_url)
+        response = self._session.get(project_analysis_submissions_url)
         analysis_submissions = response.json()["resource"]["resources"]
 
         return analysis_submissions
@@ -351,15 +364,18 @@ class IridaAPI(object):
         :param analysis_submission_id:
         :return analysis_result:
         """
-        analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
+        if not self.analysis_submission_url:
+            logging.info("Requesting analysis submissions url.")
+            self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
+
+        analysis_results_url = self.get_analysis_results_url(analysis_submission_id)
+
+        logging.info(f"Requesting {analysis_results_url}.")
         try:
-            logging.info(f"Requesting {analysis_submission_url}.")
-            analysis_results_url = self._get_link(analysis_submission_url, "analysis",
-                                                  target_dict={
-                                                      "key": "identifier",
-                                                      "value": analysis_submission_id
-                                                  })
+
+            analysis_result = self._session.get(analysis_results_url).json()["resource"]
+
         except exceptions.IridaKeyError:
             """
             Catches an exception if an analysis submission does not contain an analysis result.
@@ -368,19 +384,17 @@ class IridaAPI(object):
             logging.info(f"No analysis result exists for analysis submission id "
                          f"[{analysis_submission_id}]. Moving on...")
             analysis_result = {}
-        else:
-            logging.info(f"Requesting {analysis_results_url}.")
-            analysis_result = self._session.get(analysis_results_url).json()["resource"]
 
         return analysis_result
 
-    def get_analysis_result_files(self, analysis_submission_id):
+    def get_analysis_result_files(self, analysis_id):
         """
-        Returns a list of AmrOutput, which are file objects, given analysis submission id.
-        This function accepts analysis_submission_id with COMPLETED analysis status and an AMR_DETECTION type,
+        Returns a list of Result, which are file objects, given analysis id.
+        Each AMR analysis should have at least five Result file objects. staramr-pointfinder.tsv is optional.
+        This function accepts analysis_id with COMPLETED analysis status and an AMR_DETECTION type,
             otherwise, it will thrown an exception.
-        :param analysis_submission_id:
-        :return amr_analysis_submissions:
+        :param analysis_id:
+        :return result_files: an array of Results object
         """
 
         file_list = [
@@ -398,7 +412,7 @@ class IridaAPI(object):
         # get file urls base on file_list
         for file_key in file_list:
             try:
-                file_url = self._get_file_url(analysis_submission_id, file_key)
+                file_url = self._get_file_url(analysis_id, file_key)
             except exceptions.IridaKeyError:
 
                 if file_key == "staramr-pointfinder.tsv":
@@ -407,17 +421,18 @@ class IridaAPI(object):
                     disabled in an amr analysis run.
                     This means the analysis does not contain the staramr-pointfinder.tsv file which is acceptable.
                     """
-                    logging.debug("No staramr-pointfinder.tsv found as one of the output files, skipping...")
+                    logging.debug(f"No staramr-pointfinder.tsv found as one of the output files for analysis "
+                                  f"[{analysis_id}], skipping...")
                     continue
                 else:
                     """
                     Catches an exception if an analysis submission does not contain an analysis result.
-                    For our case, this shouldn't happen since we use completed amr type analysis submission given 
-                    by the caller (amr_downloader).
+                    For our case, this shouldn't happen since we use analysis_id with COMPLETED analysis status and 
+                    an AMR_DETECTION type given by the caller (downloader).
                     """
-                    logging.error(f"No analysis result exists for analysis submission id "
-                                  f"[{analysis_submission_id}]. Check analysis submission id [{analysis_submission_id}] "
-                                  f"and ensure the analysis status is COMPLETED.")
+                    logging.error(f"No analysis result exists for analysis id "
+                                  f"[{analysis_id}]. Check analysis id [{analysis_id}] "
+                                  f"and ensure the analysis status is COMPLETED and with type AMR_DETECTION.")
 
             # response containing json
             response_json = self._session.get(file_url)
@@ -433,19 +448,42 @@ class IridaAPI(object):
 
         return result_files
 
-    def _get_file_url(self, analysis_submission_id, file_key):
+    def _get_file_url(self, analysis_id, file_key):
         """
         Returns a URL of a file given an file key (file name with extension)
-        :param analysis_submission_id: Needed for api call.
-        :param file_key:
-        :return:
+        :param analysis_id: integer
+        :param file_key: string, file name (eg. staramr-resfinder.tsv)
+        :return file_url: string
         """
-        analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
-        analysis_result_url = self._get_link(analysis_submission_url, "analysis", target_dict={
-            "key": "identifier",
-            "value": analysis_submission_id
-        })
+        if not self.analysis_submission_url:
+            self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
+        analysis_result_url = self.get_analysis_results_url(self.target_submission_ids[analysis_id])
 
         file_url = self._get_link(analysis_result_url, "outputFile/" + file_key)
         return file_url
+
+    def get_analysis_results_url(self, analysis_submission_id):
+        """
+        This method returns analysis results url given the analysis submission id.
+        Note: self._get_link() is not used here to lessen the amount of api calls made.
+        A drawback, this method assumes the endpoint is /analysisSubmissions/{submission_id}/analysis.
+        But the benefits of improved efficiency outweighs the drawback.
+        :param analysis_submission_id:
+        :return analysis results url: string
+        """
+        if not self.analysis_submission_url:
+            logging.info("Requesting analysis submissions url.")
+            self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
+
+        return f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
+
+    def _store_submission_id(self, results_id, submission_id):
+        """
+        This method stores results id and submission id to a dictionary declared as an instance variable called
+        target_submission_ids. eg. { results_id:submission_id, ... }
+        :param results_id: the id of analysis results corresponding to the analysis submission given.
+        :param submission_id: analysis submission id
+        :return None:
+        """
+        self.target_submission_ids[results_id] = submission_id
