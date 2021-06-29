@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  pull_request: # Run on all pull requests
+  push:
+    branches: # Run on any push to development or main
+    - development
+    - main
+
+  workflow_dispatch: # allow to run this workflow manually from the Actions tab
+
+jobs:
+  build-project:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2 # checkout repository from git
+
+    - name: Build irida-staramr-results
+      run: |
+        python3 -m venv .virtualenv
+        source .virtualenv/bin/activate
+        pip3 install --upgrade wheel pip
+        pip install -e .
+        python3 setup.py sdist bdist_wheel
+        irida-staramr-results --help
+        deactivate
+        
+  
+  build-project-with-make:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2 # checkout repository from git
+
+    - name: Build irida-staramr-results
+      run: |
+        make
+        source .virtualenv/bin/activate
+        irida-staramr-results --help
+      
+  unit-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2 # checkout repository from git
+
+    - name: Run unit test
+      run: make unittests
+        
+  
+
+
+

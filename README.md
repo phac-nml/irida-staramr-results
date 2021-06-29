@@ -1,6 +1,6 @@
 # IRIDA StarAMR Results
 
-IRIDA StarAMR Results program enables StarAMR analysis results of a single project that were run through IRIDA to be batch downloaded into a single spreadsheet using command line. An option to split the results into separate spreadsheets is also available.
+IRIDA StarAMR Results program enables StarAMR analysis results that were run through IRIDA to be batch downloaded into a collection of spreadsheets using the command line. 
 
 # How to use:
 
