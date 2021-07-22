@@ -1,6 +1,6 @@
 # Changes
 
-##0.1.0 to 0.1.1
+##0.1.0 to 0.1.2
 
 Developer changes:
 
