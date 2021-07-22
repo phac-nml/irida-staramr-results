@@ -1,12 +1,6 @@
 import setuptools
 from irida_staramr_results.version import __version__
 
-# Use the requirements file for install_requires on PyPi
-install_requires = []
-requirements = open("requirements.txt", "r")
-for r in requirements:
-    install_requires.append(r)
-
 # Use the readme file as the long description on PyPi
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -32,7 +26,15 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "License :: OSI Approved :: Apache Software License",
     ],
-    install_requires=install_requires,
+    install_requires=[
+        "rauth",
+        "requests",
+        "setuptools",
+        "pyyaml",
+        "pandas",
+        "xlsxwriter",
+        "python-dateutil"
+    ],
     packages=setuptools.find_packages(),
     include_package_data=True,
     entry_points = {
