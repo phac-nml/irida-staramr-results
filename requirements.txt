@@ -1,0 +1,7 @@
+rauth
+requests
+setuptools
+pyyaml
+pandas
+xlsxwriter
+python-dateutil
