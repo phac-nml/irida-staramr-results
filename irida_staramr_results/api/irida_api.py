@@ -325,8 +325,10 @@ class IridaAPI(object):
 
         # Filter Completed AMR Detection type
         for analysis_submission in project_analysis_submissions:
+
             print_progress_bar(iteration, total, message="analysis submissions seen")
             iteration = iteration + 1
+
             if analysis_submission["analysisState"] == "COMPLETED":
                 analysis_result = self._get_analysis_result(analysis_submission["identifier"])
                 if self._is_result_type_amr(analysis_result):
@@ -375,7 +377,6 @@ class IridaAPI(object):
         """
 
         if not self.analysis_submission_url:
-            logging.info("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         analysis_results_url = self.get_analysis_results_url(analysis_submission_id)
@@ -481,7 +482,6 @@ class IridaAPI(object):
         :return analysis results url: string
         """
         if not self.analysis_submission_url:
-            logging.info("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         return f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
