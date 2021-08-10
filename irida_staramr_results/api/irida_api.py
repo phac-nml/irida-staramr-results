@@ -326,8 +326,8 @@ class IridaAPI(object):
         # Filter Completed AMR Detection type
         for analysis_submission in project_analysis_submissions:
 
-            print_progress_bar(iteration, total, message="analysis submissions seen")
             iteration = iteration + 1
+            print_progress_bar(iteration, total, message="analysis submissions seen")
 
             if analysis_submission["analysisState"] == "COMPLETED":
                 analysis_result = self._get_analysis_result(analysis_submission["identifier"])
@@ -336,6 +336,8 @@ class IridaAPI(object):
 
                     # cache submission id with corresponding result id
                     self._store_submission_id(analysis_result["identifier"], analysis_submission["identifier"])
+
+        logging.info(f"{len(completed_amr_analysis_results)} completed StarAMR analysis results were requested in total.")
 
         if len(completed_amr_analysis_results) < 1:
             logging.warning(f"No Completed AMR Detection type found in project [{project_id}].")
