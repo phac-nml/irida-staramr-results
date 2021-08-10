@@ -11,6 +11,7 @@ from rauth import OAuth2Service
 
 from irida_staramr_results.api import exceptions
 from irida_staramr_results.model.result import Result
+from irida_staramr_results.util import print_progress_bar
 
 
 # For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
@@ -316,8 +317,16 @@ class IridaAPI(object):
             error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaResourceError(error_txt)
 
+        logging.info("Requesting completed staramr analysis results.")
+
+        # progress bar variables
+        total = len(project_analysis_submissions)
+        iteration = 0
+
         # Filter Completed AMR Detection type
         for analysis_submission in project_analysis_submissions:
+            print_progress_bar(iteration, total, message="analysis submissions seen")
+            iteration = iteration + 1
             if analysis_submission["analysisState"] == "COMPLETED":
                 analysis_result = self._get_analysis_result(analysis_submission["identifier"])
                 if self._is_result_type_amr(analysis_result):
@@ -371,7 +380,6 @@ class IridaAPI(object):
 
         analysis_results_url = self.get_analysis_results_url(analysis_submission_id)
 
-        logging.info(f"Requesting {analysis_results_url}.")
         try:
 
             analysis_result = self._session.get(analysis_results_url).json()["resource"]
