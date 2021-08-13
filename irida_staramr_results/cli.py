@@ -10,6 +10,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
+
 def init_argparser():
     argument_parser = argparse.ArgumentParser(
         prog="irida-staramr-results",

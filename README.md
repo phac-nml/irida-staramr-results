@@ -89,6 +89,8 @@ The following instructions describe how to install and execute IRIDA StarAMR Res
     $ make unittests
     ```
 
+# Developer Notes
+To display debug messages, change the logging level from `logging.INFO` to `logging.DEBUG` in `cli.py`. This will disable the progress bar and display the id of what is being requested.
 
 ## Legal
 

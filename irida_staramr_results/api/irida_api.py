@@ -11,6 +11,7 @@ from rauth import OAuth2Service
 
 from irida_staramr_results.api import exceptions
 from irida_staramr_results.model.result import Result
+from irida_staramr_results.util import print_progress_bar
 
 
 # For a truly independent api module, we should have a signal, or pubsub system in the module, that the progress module
@@ -316,8 +317,18 @@ class IridaAPI(object):
             error_txt = f"The given project ID doesn't exist: {project_id}. "
             raise exceptions.IridaResourceError(error_txt)
 
+        logging.info("Requesting completed staramr analysis results.")
+
+        # progress bar variables
+        total = len(project_analysis_submissions)
+        iteration = 0
+
         # Filter Completed AMR Detection type
         for analysis_submission in project_analysis_submissions:
+
+            iteration = iteration + 1
+            print_progress_bar(iteration, total, message="analysis submissions seen")
+
             if analysis_submission["analysisState"] == "COMPLETED":
                 analysis_result = self._get_analysis_result(analysis_submission["identifier"])
                 if self._is_result_type_amr(analysis_result):
@@ -325,6 +336,8 @@ class IridaAPI(object):
 
                     # cache submission id with corresponding result id
                     self._store_submission_id(analysis_result["identifier"], analysis_submission["identifier"])
+
+        logging.info(f"{len(completed_amr_analysis_results)} completed StarAMR analysis results were requested in total.")
 
         if len(completed_amr_analysis_results) < 1:
             logging.warning(f"No Completed AMR Detection type found in project [{project_id}].")
@@ -366,12 +379,12 @@ class IridaAPI(object):
         """
 
         if not self.analysis_submission_url:
-            logging.info("Requesting analysis submissions url.")
+            logging.debug("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         analysis_results_url = self.get_analysis_results_url(analysis_submission_id)
 
-        logging.info(f"Requesting {analysis_results_url}.")
+        logging.debug(f"Requesting {analysis_results_url}.")
         try:
 
             analysis_result = self._session.get(analysis_results_url).json()["resource"]
@@ -456,6 +469,7 @@ class IridaAPI(object):
         :return file_url: string
         """
         if not self.analysis_submission_url:
+            logging.debug("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         analysis_result_url = self.get_analysis_results_url(self.target_submission_ids[analysis_id])
@@ -470,10 +484,9 @@ class IridaAPI(object):
         A drawback, this method assumes the endpoint is /analysisSubmissions/{submission_id}/analysis.
         But the benefits of improved efficiency outweighs the drawback.
         :param analysis_submission_id:
-        :return analysis results url: string
         """
         if not self.analysis_submission_url:
-            logging.info("Requesting analysis submissions url.")
+            logging.debug("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         return f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"
