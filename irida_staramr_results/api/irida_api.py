@@ -379,10 +379,12 @@ class IridaAPI(object):
         """
 
         if not self.analysis_submission_url:
+            logging.debug("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         analysis_results_url = self.get_analysis_results_url(analysis_submission_id)
 
+        logging.debug(f"Requesting {analysis_results_url}.")
         try:
 
             analysis_result = self._session.get(analysis_results_url).json()["resource"]
@@ -467,6 +469,7 @@ class IridaAPI(object):
         :return file_url: string
         """
         if not self.analysis_submission_url:
+            logging.debug("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         analysis_result_url = self.get_analysis_results_url(self.target_submission_ids[analysis_id])
@@ -481,9 +484,9 @@ class IridaAPI(object):
         A drawback, this method assumes the endpoint is /analysisSubmissions/{submission_id}/analysis.
         But the benefits of improved efficiency outweighs the drawback.
         :param analysis_submission_id:
-        :return analysis results url: string
         """
         if not self.analysis_submission_url:
+            logging.debug("Requesting analysis submissions url.")
             self.analysis_submission_url = self._get_link(self.base_url, "analysisSubmissions")
 
         return f"{self.analysis_submission_url}/{analysis_submission_id}/analysis"

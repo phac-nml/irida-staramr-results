@@ -7,8 +7,9 @@ from irida_staramr_results import downloader, api, parser, validate
 
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     datefmt='%Y-%m-%d %H:%M:%S')
+
 
 def init_argparser():
     argument_parser = argparse.ArgumentParser(

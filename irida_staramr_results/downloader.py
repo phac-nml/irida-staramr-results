@@ -58,13 +58,14 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
             out_name = _get_output_file_name(output_file_name, a["createdDate"])
             iteration = iteration + 1
             util.print_progress_bar(iteration, total, message="results downloaded")
-            # logging.info(f"Creating a file named {out_name}.xlsx for analysis [{a['identifier']}]. ")
+            logging.debug(f"Creating a file named {out_name}.xlsx for analysis [{a['identifier']}]. ")
             _data_frames_to_excel(data_frames, out_name)
     else:
         # Base case, collect all the data into dataframes, one per unique file name, then write a single file.
         logging.info(f"Appending all results data in one output file.")
         data_frames = {}
         for a in amr_completed_analysis_results:
+            logging.debug(f"Appending analysis [{a['identifier']}]. ")
             result_files = irida_api.get_analysis_result_files(a["identifier"])
             data_frames = _append_file_data_to_existing_data_frames(result_files, data_frames)
             iteration = iteration + 1
