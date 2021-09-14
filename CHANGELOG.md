@@ -1,5 +1,13 @@
 # Changes
 
+##0.1.2 to 0.2.0
+
+Features
+* Added progress bar
+
+Development changes:
+* Improved logging
+
 ##0.1.0 to 0.1.2
 
 Developer changes:
