@@ -134,3 +134,6 @@ dmypy.json
 
 #OS generated files:
 .DS_Store
+
+# Project Specific files/dirs
+staramr-results-*/

@@ -32,6 +32,7 @@ setuptools.setup(
         "setuptools",
         "pyyaml",
         "pandas",
+        "openpyxl",
         "xlsxwriter",
         "python-dateutil"
     ],

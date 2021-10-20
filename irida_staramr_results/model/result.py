@@ -6,7 +6,7 @@ SHEET_NAMES = {
     "staramr-summary.tsv": "Summary",
     "staramr-plasmidfinder.tsv": "PlasmidFinder",
     "staramr-mlst.tsv": "MLST_Summary",
-    "staramr-pointfinder.tsv": "PointFinder"
+    "staramr-excel.xlsx": "PointFinder"
 }
 
 
@@ -18,6 +18,12 @@ class Result(object):
         self.file_key = file_key
 
     def get_contents(self):
+        # Excel files do not need to be converted to utf-8 strings
+        # Pointfinder data is ripped from excel file as tsv file for pointfinder is not included
+        if self.file_key == "staramr-excel.xlsx":
+            # return raw excel file data
+            return self.file_content
+
         # convert bytes contents to string
         contents_str = str(self.file_content, 'utf-8')
 
