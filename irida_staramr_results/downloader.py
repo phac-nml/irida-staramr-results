@@ -117,11 +117,9 @@ def _data_frames_to_excel(data_frames, output_file_name):
         for file_sheet_name in data_frames:
             logging.debug(f"Writing {file_sheet_name} data to {output_file_name}.xlsx.")
             df = data_frames[file_sheet_name]
-            df.to_excel(writer, sheet_name=file_sheet_name, index=False)
-
-        # auto-fit column width
-        for file_sheet_name in data_frames:
-            _auto_fit_column_width(writer, data_frames[file_sheet_name], file_sheet_name)
+            if not df.empty:
+                df.to_excel(writer, sheet_name=file_sheet_name, index=False)
+                _auto_fit_column_width(writer, data_frames[file_sheet_name], file_sheet_name)
 
 
 def _auto_fit_column_width(writer, data_frame, sheet_name, max_width=75):
@@ -197,7 +195,11 @@ def _convert_to_df(file_sheet_name, file_content):
     """
     # Pointfinder data comes from the specified "PointFinder" page of an excel sheet.
     if file_sheet_name == "PointFinder":
-        data_frame = pd.read_excel(file_content, sheet_name=file_sheet_name)
+        try:
+            data_frame = pd.read_excel(file_content, sheet_name=file_sheet_name)
+        except ValueError:
+            # no pointfinder sheet on excel file, return empty data_frame
+            return pd.DataFrame()
     # All other data fits into either a dict or a csv/tsv
     elif type(file_content) is dict:
         data_frame = pd.DataFrame([file_content])
