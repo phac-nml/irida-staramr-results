@@ -417,7 +417,7 @@ class IridaAPI(object):
             "staramr-summary.tsv",
             "staramr-plasmidfinder.tsv",
             "staramr-mlst.tsv",
-            "staramr-pointfinder.tsv"
+            "staramr-excel.xlsx"
         ]
 
         result_files = []
@@ -427,25 +427,14 @@ class IridaAPI(object):
             try:
                 file_url = self._get_file_url(analysis_id, file_key)
             except exceptions.IridaKeyError:
-
-                if file_key == "staramr-pointfinder.tsv":
-                    """
-                    We want ignore the IridaKeyError thrown and skip to the next iteration because PointFinder can be 
-                    disabled in an amr analysis run.
-                    This means the analysis does not contain the staramr-pointfinder.tsv file which is acceptable.
-                    """
-                    logging.debug(f"No staramr-pointfinder.tsv found as one of the output files for analysis "
-                                  f"[{analysis_id}], skipping...")
-                    continue
-                else:
-                    """
-                    Catches an exception if an analysis submission does not contain an analysis result.
-                    For our case, this shouldn't happen since we use analysis_id with COMPLETED analysis status and 
-                    an AMR_DETECTION type given by the caller (downloader).
-                    """
-                    logging.error(f"No analysis result exists for analysis id "
-                                  f"[{analysis_id}]. Check analysis id [{analysis_id}] "
-                                  f"and ensure the analysis status is COMPLETED and with type AMR_DETECTION.")
+                """
+                Catches an exception if an analysis submission does not contain an analysis result.
+                For our case, this shouldn't happen since we use analysis_id with COMPLETED analysis status and 
+                an AMR_DETECTION type given by the caller (downloader).
+                """
+                logging.error(f"No analysis result exists for analysis id "
+                              f"[{analysis_id}]. Check analysis id [{analysis_id}] "
+                              f"and ensure the analysis status is COMPLETED and with type AMR_DETECTION.")
 
             # response containing json
             response_json = self._session.get(file_url)
