@@ -2,6 +2,15 @@
 
 IRIDA StarAMR Results program enables StarAMR analysis results that were run through IRIDA to be batch downloaded into a collection of spreadsheets using the command line. 
 
+# Installation
+Pypi Installation: https://pypi.org/project/irida-staramr-results/
+
+`pip install irida-staramr-results`
+
+Conda Installation: https://anaconda.org/bioconda/irida-staramr-results
+
+`conda install -c bioconda irida-staramr-results
+`
 # How to use:
 
 - Assuming you have already installed the program, you can use `irida-staramr-results` command.

@@ -3,5 +3,6 @@ requests
 setuptools
 pyyaml
 pandas
+openpyxl
 xlsxwriter
 python-dateutil
