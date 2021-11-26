@@ -1,5 +1,8 @@
 # Changes
 
+## 0.4.0
+TODO: fill this out
+
 ## 0.3.0 to 0.3.1
 Bug Fixes
 * Fixed openpyxl not being imported for conda builds

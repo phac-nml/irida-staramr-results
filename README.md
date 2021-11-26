@@ -1,3 +1,5 @@
+## WHOA THERE, This is an untested mockup of how automation could be implimented, do not use this branch.
+
 # IRIDA StarAMR Results
 
 IRIDA StarAMR Results program enables StarAMR analysis results that were run through IRIDA to be batch downloaded into a collection of spreadsheets using the command line. 

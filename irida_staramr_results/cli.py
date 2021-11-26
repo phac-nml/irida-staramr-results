@@ -108,9 +108,19 @@ def main():
     irida_api = _init_api(args_dict, config_dict)
     logging.info("Successfully connected to IRIDA API.")
 
+    split_results = args_dict["split_results"]
     # Start downloading results
-    downloader.download_all_results(irida_api, args_dict["project"], args_dict["output"], args_dict["split_results"],
-                                    args_dict["from_date"], args_dict["to_date"])
+    if split_results:
+        data_frame_tuples = downloader.download_all_results_seperate_mode(
+            irida_api, args_dict["project"], args_dict["output"], args_dict["from_date"], args_dict["to_date"])
+        logging.info(f"Download complete for project id [{args_dict['project']}].")
+        for df in data_frame_tuples:
+            downloader.data_frames_to_excel(df[0], df[1])
+    else:
+        data_frames = downloader.download_all_results(
+            irida_api, args_dict["project"], args_dict["from_date"], args_dict["to_date"])
+        logging.info(f"Download complete for project id [{args_dict['project']}.")
+        downloader.data_frames_to_excel(data_frames, args_dict["output"])
 
 
 # This is called when the program is run for the first time

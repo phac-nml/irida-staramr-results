@@ -10,16 +10,14 @@ from irida_staramr_results import filter, util
 _directory_name = ""
 
 
-def download_all_results(irida_api, project_id, output_file_name, separate_mode, from_timestamp, to_timestamp):
+def download_all_results(irida_api, project_id, from_timestamp, to_timestamp):
     """
-    Main function for downloading StarAMR results to an excel file.
+    Main function for downloading StarAMR results to dataframes.
     :param irida_api:
     :param project_id:
-    :param output_file_name:
-    :param separate_mode: boolean, export file data separately if True
     :param from_timestamp: 00:00:00 of this day
     :param to_timestamp: 23:59:58 of this day
-    :return:
+    :return: pd Dataframe object
     """
 
     logging.info(f"Requesting completed amr analysis submissions for project id [{project_id}]. "
@@ -49,30 +47,67 @@ def download_all_results(irida_api, project_id, output_file_name, separate_mode,
     total = len(amr_completed_analysis_results)
     iteration = 0
 
-    if separate_mode:
-        # Write the collection of files into a file, one file per analysis
-        logging.info(f"Writing each results data per analysis in their separate output file...")
-        for a in amr_completed_analysis_results:
-            results_files = irida_api.get_analysis_result_files(a["identifier"])
-            data_frames = _files_to_data_frames(results_files)
-            out_name = _get_output_file_name(output_file_name, a["createdDate"])
-            iteration = iteration + 1
-            util.print_progress_bar(iteration, total, message="results downloaded")
-            logging.debug(f"Creating a file named {out_name}.xlsx for analysis [{a['identifier']}]. ")
-            _data_frames_to_excel(data_frames, out_name)
-    else:
-        # Base case, collect all the data into dataframes, one per unique file name, then write a single file.
-        logging.info(f"Appending all results data in one output file.")
-        data_frames = {}
-        for a in amr_completed_analysis_results:
-            logging.debug(f"Appending analysis [{a['identifier']}]. ")
-            result_files = irida_api.get_analysis_result_files(a["identifier"])
-            data_frames = _append_file_data_to_existing_data_frames(result_files, data_frames)
-            iteration = iteration + 1
-            util.print_progress_bar(iteration, total, message="results appended")
-        _data_frames_to_excel(data_frames, output_file_name)
+    logging.info(f"Appending all results data in one output file.")
+    data_frames = {}
+    for a in amr_completed_analysis_results:
+        logging.debug(f"Appending analysis [{a['identifier']}]. ")
+        result_files = irida_api.get_analysis_result_files(a["identifier"])
+        data_frames = _append_file_data_to_existing_data_frames(result_files, data_frames)
+        iteration = iteration + 1
+        util.print_progress_bar(iteration, total, message="results appended")
+    return data_frames
 
-    logging.info(f"Download complete for project id [{project_id}].")
+
+def download_all_results_seperate_mode(irida_api, project_id, output_file_name, from_timestamp, to_timestamp):
+    """
+    Main function for downloading StarAMR results to dataframes.
+    :param irida_api:
+    :param project_id:
+    :param output_file_name:
+    :param from_timestamp: 00:00:00 of this day
+    :param to_timestamp: 23:59:58 of this day
+    :return: list of pd Dataframes + output name tuples
+    """
+
+    logging.info(f"Requesting completed amr analysis submissions for project id [{project_id}]. "
+                 f"This may take a while...")
+
+    amr_completed_analysis_results = irida_api.get_completed_amr_analysis_results(project_id)
+
+    if len(amr_completed_analysis_results) < 1:
+        logging.warning(f"No completed amr analysis results type for project id [{project_id}].")
+        return
+
+    # Filter analysis created since target date (in timestamp)
+    amr_completed_analysis_results = filter.by_date_range(amr_completed_analysis_results, from_timestamp, to_timestamp)
+
+    if len(amr_completed_analysis_results) < 1:
+        from_date = util.timestamp_to_local(from_timestamp)
+        to_date = util.timestamp_to_local(to_timestamp - 86400000)
+        logging.warning(f"No completed amr analysis submission created from [{from_date}] to [{to_date}]. Exiting..")
+        return
+
+    global _directory_name
+    _directory_name = "staramr-results-" + datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    logging.info(f"Creating directory name {_directory_name} to store results files.")
+    os.mkdir(_directory_name)
+
+    # progress bar variables
+    total = len(amr_completed_analysis_results)
+    iteration = 0
+
+    # Write the collection of files into a file, one file per analysis
+    logging.info(f"Writing each results data per analysis in their separate output file...")
+    data_frame_tuple_list = []
+    for a in amr_completed_analysis_results:
+        results_files = irida_api.get_analysis_result_files(a["identifier"])
+        data_frames = _files_to_data_frames(results_files)
+        out_name = _get_output_file_name(output_file_name, a["createdDate"])
+        iteration = iteration + 1
+        util.print_progress_bar(iteration, total, message="results downloaded")
+        logging.debug(f"Creating a file named {out_name}.xlsx for analysis [{a['identifier']}]. ")
+        data_frame_tuple_list.append((data_frames, out_name))
+    return data_frame_tuple_list
 
 
 def _get_output_file_name(prefix_name, timestamp):
@@ -101,7 +136,7 @@ def _get_output_file_name(prefix_name, timestamp):
     return output_file_name
 
 
-def _data_frames_to_excel(data_frames, output_file_name):
+def data_frames_to_excel(data_frames, output_file_name):
     """
     Writes data_frames to the output file.
     Each dataframe is appended as a separate sheet.
